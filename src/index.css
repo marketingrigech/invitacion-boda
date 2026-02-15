@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+.invitation-scene {
+  isolation: isolate;
+}
+
+.paper-bg,
+.paper-emboss,
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.paper-bg,
+.paper-emboss {
+  background-image: var(--paper-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.paper-bg {
+  z-index: 0;
+  opacity: 0;
+  filter: brightness(1.05) contrast(0.9) blur(1.6px);
+  transform: scale(1.006);
+  transition: opacity 2.2s cubic-bezier(0.2, 0.7, 0.2, 1),
+    filter 2.2s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 2.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.paper-emboss {
+  z-index: 5;
+  opacity: 0.3;
+  mix-blend-mode: multiply;
+  filter: grayscale(1) contrast(1.42) brightness(1.06) blur(0.15px);
+  transition: opacity 1.8s ease-out, transform 1.8s ease-out;
+}
+
+.loader-overlay {
+  z-index: 10;
+  opacity: 1;
+  background: linear-gradient(180deg, #ffffff 0%, #fdfcf9 58%, #fcfaf6 100%);
+  transition: opacity 1.9s cubic-bezier(0.23, 0.62, 0.33, 1);
+}
+
+.loader-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 90% at 50% 8%,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.12) 64%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 1;
+  transition: opacity 1.9s ease-out;
+}
+
+.invitation-scene.is-ready .paper-bg {
+  opacity: 1;
+  filter: brightness(1) contrast(1) blur(0);
+  transform: scale(1);
+}
+
+.invitation-scene.is-ready .paper-emboss {
+  opacity: 0;
+  transform: scale(1.003);
+}
+
+.invitation-scene.is-ready .loader-overlay,
+.invitation-scene.is-ready .loader-overlay::after {
+  opacity: 0;
+}
