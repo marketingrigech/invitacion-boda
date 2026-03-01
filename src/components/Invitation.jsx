@@ -373,9 +373,9 @@ function Invitation({ envelopeOpen }) {
             <p className="text-sm text-wine-dark/70 mb-4 font-serif italic px-4">Por favor, confirma tu asistencia para que podamos organizar los detalles.</p>
 
             {/* COUNTDOWN */}
-            <div className="mb-8">
-              <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-wine-dark/80 mb-3 font-medium">Confirma antes del 10 de Mayo de 2026</p>
-              <div className="flex justify-center gap-3 sm:gap-6 font-serif">
+            <div className="mb-10 w-[calc(100%+48px)] sm:w-[calc(100%+96px)] -mx-6 sm:-mx-12 border-y border-[#e5d5c5]/60 py-8 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
+              <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-wine-dark/80 mb-5 font-medium px-4">Confirma antes del 10 de Mayo de 2026</p>
+              <div className="flex justify-center gap-3 sm:gap-6 font-serif px-4">
                 <div className="flex flex-col items-center">
                   <span className="text-3xl sm:text-4xl text-wine">{timeLeft.dias || '0'}</span>
                   <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Días</span>
