@@ -1,33 +1,313 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+// Constantes de física de la cuerda
+const NUM_NODES = 40;
+const DAMPING = 0.96;
+const GRAVITY = 0.6;
+const IDLE_GRAVITY = 0.05; // Gravedad baja para mantenerla más tensa mientras reposa
+const STIFFNESS = 1.0; // Mayor rigidez
+const ITERATIONS = 40; // Mayor cantidad de iteraciones para dar aspecto estirado
+const ROPE_COLOR_BASE = '#8b7355'; // Color marrón más oscuro tipo cuerda vieja
+const ROPE_COLOR_HIGHLIGHT = '#a68a64'; // Trenzado oscurecido
+const ROPE_SHADOW = '#4a3b2b';
+
+// Clases de Simulación Física
+class VerletNode {
+    constructor(x, y, isFixed = false) {
+        this.x = x;
+        this.y = y;
+        this.oldX = x;
+        this.oldY = y;
+        this.isFixed = isFixed;
+    }
+}
+
+class Particle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 12;
+        this.vy = (Math.random() - 0.5) * 12 - 4;
+        this.life = 1.0;
+        this.decay = Math.random() * 0.03 + 0.02;
+        this.size = Math.random() * 2 + 1.5;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += GRAVITY * 0.5;
+        this.vx *= 0.95;
+        this.life -= this.decay;
+    }
+}
 
 export default function Envelope({ onOpen }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isCut, setIsCut] = useState(false);
 
+    const canvasRef = useRef(null);
+    const containerRef = useRef(null);
+
+    // Estado mutable para RAF (requestAnimationFrame)
+    const stateRef = useRef({
+        nodes: [],
+        particles: [],
+        cutIndex: -1,
+        isCut: false,
+        flashTimer: 0,
+        time: 0,
+        restLength: 0
+    });
+
+    const initRope = (width, height) => {
+        const nodes = [];
+        const startX = 0;
+        const endX = width;
+        const y = height / 2;
+        const segmentLength = width / (NUM_NODES - 1);
+
+        stateRef.current.restLength = segmentLength;
+
+        for (let i = 0; i < NUM_NODES; i++) {
+            const isCenter = i === Math.floor(NUM_NODES / 2);
+            const isFixed = i === 0 || i === NUM_NODES - 1 || isCenter;
+            nodes.push(new VerletNode(startX + i * segmentLength, y, isFixed));
+        }
+        stateRef.current.nodes = nodes;
+    };
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (!canvas || !ctx) return;
+
+        let animationFrameId;
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                const { width, height } = entry.contentRect;
+                canvas.width = width;
+                canvas.height = height;
+                if (!stateRef.current.isCut) {
+                    initRope(width, height);
+                }
+            }
+        });
+
+        if (containerRef.current) {
+            resizeObserver.observe(containerRef.current);
+        }
+
+        const updatePhysics = () => {
+            const state = stateRef.current;
+            state.time += 0.05;
+
+            // Actualizar nodos
+            for (let i = 0; i < state.nodes.length; i++) {
+                const node = state.nodes[i];
+                if (!node.isFixed) {
+                    const vx = (node.x - node.oldX) * DAMPING;
+                    const vy = (node.y - node.oldY) * DAMPING;
+                    const currentGravity = state.isCut ? GRAVITY : IDLE_GRAVITY;
+                    node.oldX = node.x;
+                    node.oldY = node.y;
+                    node.x += vx;
+                    node.y += vy + currentGravity;
+
+                    // Respiración idle si no está cortada
+                    if (!state.isCut) {
+                        const distToEdge = Math.min(i, state.nodes.length - 1 - i);
+                        const intensity = distToEdge / (state.nodes.length / 2);
+                        node.y += Math.sin(state.time + i * 0.15) * 0.15 * intensity;
+                    }
+                }
+            }
+
+            // Constraints Verlet
+            for (let iter = 0; iter < ITERATIONS; iter++) {
+                for (let i = 0; i < state.nodes.length - 1; i++) {
+                    if (state.isCut && i === state.cutIndex) continue; // Si está cortada, ignorar enlace
+
+                    const n1 = state.nodes[i];
+                    const n2 = state.nodes[i + 1];
+                    const dx = n2.x - n1.x;
+                    const dy = n2.y - n1.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const difference = state.restLength - distance;
+                    const percent = difference / distance / 2;
+                    const offsetX = dx * percent;
+                    const offsetY = dy * percent;
+
+                    if (!n1.isFixed) {
+                        n1.x -= offsetX * STIFFNESS;
+                        n1.y -= offsetY * STIFFNESS;
+                    }
+                    if (!n2.isFixed) {
+                        n2.x += offsetX * STIFFNESS;
+                        n2.y += offsetY * STIFFNESS;
+                    }
+                }
+            }
+
+            // Actualizar partículas
+            for (let i = state.particles.length - 1; i >= 0; i--) {
+                const p = state.particles[i];
+                p.update();
+                if (p.life <= 0) {
+                    state.particles.splice(i, 1);
+                }
+            }
+
+            if (state.flashTimer > 0) {
+                state.flashTimer -= 0.08;
+            }
+        };
+
+        const drawRopeOffset = (ctx, nodes, cutIndex, isCut, offsetY, color, lineWidth, dash = [], dashOffset = 0) => {
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.setLineDash(dash);
+            ctx.lineDashOffset = dashOffset;
+
+            const drawSegment = (start, end) => {
+                if (end <= start) return;
+                ctx.moveTo(nodes[start].x, nodes[start].y + offsetY);
+                for (let i = start; i < end - 1; i++) {
+                    const xc = (nodes[i].x + nodes[i + 1].x) / 2;
+                    const yc = (nodes[i].y + nodes[i + 1].y) / 2;
+                    ctx.quadraticCurveTo(nodes[i].x, nodes[i].y + offsetY, xc, yc + offsetY);
+                }
+                ctx.lineTo(nodes[end].x, nodes[end].y + offsetY);
+            };
+
+            // Dibujar mitad izquierda
+            if (nodes.length > 0) {
+                drawSegment(0, isCut ? cutIndex : nodes.length - 1);
+            }
+            ctx.stroke();
+
+            // Dibujar mitad derecha si está cortada
+            if (isCut && cutIndex < nodes.length - 1) {
+                ctx.beginPath();
+                drawSegment(cutIndex + 1, nodes.length - 1);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]); // Resetear line dash para la siguiente brocha
+        };
+
+        const render = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const state = stateRef.current;
+
+            updatePhysics();
+
+            // Efecto de sombra realista (más suave para cuerda más fina)
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowOffsetY = 2;
+
+            // Capa 1: Contorno oscuro de la cuerda para sensación cilíndrica (3D)
+            drawRopeOffset(ctx, state.nodes, state.cutIndex, state.isCut, 0, '#382a1c', 3.5);
+
+            ctx.shadowColor = 'transparent';
+
+            // Capa 2: Base principal de la cuerda
+            drawRopeOffset(ctx, state.nodes, state.cutIndex, state.isCut, 0, '#8c755c', 2.5);
+
+            // Capa 3: Trenzado claro (luces hiladas) en espiral
+            drawRopeOffset(ctx, state.nodes, state.cutIndex, state.isCut, -0.5, '#cdae86', 1.5, [4, 4], 0);
+
+            // Capa 4: Trenzado oscuro (sombras hiladas) interceptadas
+            drawRopeOffset(ctx, state.nodes, state.cutIndex, state.isCut, 0.5, '#5c4834', 1.5, [4, 4], 4);
+
+            // Dibujar partículas (fibras saltando) simulando hilo rasgado
+            if (state.particles.length > 0) {
+                state.particles.forEach(p => {
+                    ctx.fillStyle = `rgba(205, 174, 134, ${Math.max(0, p.life)})`;
+                    ctx.beginPath();
+                    ctx.ellipse(p.x, p.y, p.size * 1.8, p.size * 0.4, p.vx * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            // Circular flash blanco en el corte
+            if (state.flashTimer > 0) {
+                const cutNode = state.nodes[state.cutIndex];
+                if (cutNode) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, state.flashTimer)})`;
+                    ctx.beginPath();
+                    ctx.arc(cutNode.x, cutNode.y, 25 * (1 - state.flashTimer + 0.5), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(render);
+        };
+
+        render();
+
+        return () => {
+            resizeObserver.disconnect();
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, []);
+
     const handleCut = () => {
         if (isCut || isOpen) return;
-        setIsCut(true); // Dispara la animación de corte "snap" y caída de cuerda
+        setIsCut(true);
 
-        // Ampliamos el tiempo de espera a 1.8s para que dé tiempo a la nueva animación de caída lenta
+        const state = stateRef.current;
+        state.isCut = true;
+        // Cortar en el lado derecho (aprox 75%) para que se vea la animación cayendo
+        state.cutIndex = Math.floor(NUM_NODES * 0.75);
+        state.flashTimer = 1.0;
+
+        // Liberar el nodo central para que la cuerda entera caiga y no se quede
+        // flotando en el medio del aire cuando el sello desaparece/baja.
+        const centerIndex = Math.floor(NUM_NODES / 2);
+        if (state.nodes[centerIndex]) {
+            state.nodes[centerIndex].isFixed = false;
+        }
+
+        const leftNode = state.nodes[state.cutIndex];
+        const rightNode = state.nodes[state.cutIndex + 1];
+
+        // Empuje inicial realista para que se separen
+        if (leftNode) {
+            leftNode.oldX += 10;
+            leftNode.oldY -= 5;
+        }
+        if (rightNode) {
+            rightNode.oldX -= 10;
+            rightNode.oldY -= 5;
+        }
+
+        // Fibras saltando
+        if (leftNode) {
+            for (let i = 0; i < 12; i++) {
+                state.particles.push(new Particle(leftNode.x, leftNode.y));
+            }
+        }
+
         setTimeout(() => {
             setIsOpen(true);
-
             setTimeout(() => {
-                onOpen();
+                if (onOpen) onOpen();
             }, 3500);
         }, 1800);
     };
-
-    // Nueva imagen floral proporcionada
-    const floralPattern = "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/8b1161c8-c26b-4061-a261-e8462bc500bf.png')";
+    const floralPattern = "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/fondos%20puertas.png')";
 
     return (
         <div className={`fixed inset-0 z-50 overflow-hidden flex items-center justify-center transition-all duration-[2000ms] ${isOpen ? 'pointer-events-none opacity-0 delay-[2500ms]' : 'opacity-100 delay-0'}`}>
 
-            {/* FONDO OPACO / BLUR INICIAL (Desaparece en cuanto se abre para revelar la Imagen Divina debajo) */}
+            {/* FONDO OPACO / BLUR INICIAL */}
             <div className={`absolute inset-0 transition-opacity duration-[1000ms] ease-in-out pointer-events-none ${isOpen ? 'opacity-0 delay-0' : 'bg-white/80 backdrop-blur-md opacity-100 delay-0'}`}></div>
 
-            {/* DESTELLO DE LUZ MÁGICA ("Cuento de Hadas") que inunda la pantalla en blanco claro */}
+            {/* DESTELLO DE LUZ MÁGICA */}
             <div
                 className={`absolute inset-0 z-10 transition-all ease-in-out pointer-events-none mix-blend-screen ${isOpen ? 'bg-white/80 opacity-100 duration-[1500ms] delay-[800ms]' : 'bg-white/0 opacity-0 duration-0 delay-0'}`}
                 style={{
@@ -35,57 +315,48 @@ export default function Envelope({ onOpen }) {
                 }}
             ></div>
 
-            {/* Contenedor del sobre a PANTALLA COMPLETA en móvil (ahora transparente por dentro) */}
+            {/* Contenedor del sobre */}
             <div
                 className={`relative w-full h-full md:max-w-[700px] md:h-[90vh] transition-all duration-[2500ms] ease-in-out flex-shrink-0 z-20 ${isOpen ? 'scale-110 opacity-0 delay-[1800ms]' : 'scale-100 opacity-100 delay-0'}`}
                 style={{ perspective: '2000px' }}
             >
-                {/* Sombra del sobre de fondo (luz blanca muy suave para quitar sombras oscuras) */}
+                {/* Sombra del sobre */}
                 <div className={`absolute inset-0 md:rounded-xl bg-transparent transition-shadow duration-[1000ms] ${isOpen ? 'shadow-none' : 'shadow-[0_20px_60px_rgba(200,190,180,0.3)]'}`}></div>
 
-                {/* NOTA: Hemos eliminado el fondo opaco falso de "Nuestra Boda" 
-                    para que al abrir la solapa se vea directamente la invitación real detrás */}
-
-                {/* SOLAPA IZQUIERDA (Abre lento y elegante) */}
+                {/* SOLAPA IZQUIERDA */}
                 <div
                     className={`absolute top-0 bottom-0 left-0 w-[50%] md:w-[50%] origin-left z-20 transition-transform duration-[2500ms] ease-[cubic-bezier(0.25,1,0.5,1)] ${isOpen ? 'delay-[700ms]' : 'delay-0'}`}
                     style={{ transform: isOpen ? 'rotateY(-140deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
                 >
-                    <div className="absolute inset-0 bg-white/50 backdrop-blur-md md:rounded-l-xl shadow-[5px_0_20px_rgba(0,0,0,0.06)] overflow-hidden border-r-[0.5px] border-[#e5d5c5]/80" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}>
-                        {/* Nuevo Patrón floral semi-transparente - Izquierda */}
-                        <div className="absolute inset-0 opacity-[0.9] bg-cover mix-blend-multiply w-[200%] md:w-[200%]" style={{ backgroundImage: floralPattern, backgroundPosition: 'left center' }}></div>
+                    <div className="absolute inset-0 bg-[#f9f8f6] md:rounded-l-xl shadow-[5px_0_20px_rgba(0,0,0,0.06)] overflow-hidden border-r-[0.5px] border-[#e5d5c5]/80">
+                        <div className="absolute top-0 bottom-0 left-0 bg-cover bg-no-repeat bg-center w-[200%]" style={{ backgroundImage: floralPattern }}></div>
                     </div>
                 </div>
 
-                {/* SOLAPA DERECHA (Abre lento y elegante) */}
+                {/* SOLAPA DERECHA */}
                 <div
                     className={`absolute top-0 bottom-0 right-0 w-[51%] md:w-[51%] origin-right z-30 transition-transform duration-[2500ms] ease-[cubic-bezier(0.25,1,0.5,1)] delay-0`}
                     style={{ transform: isOpen ? 'rotateY(140deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
                 >
-                    <div className="absolute inset-0 bg-white/50 backdrop-blur-md md:rounded-r-xl border-l-[0.5px] border-[#e5d5c5]/80 shadow-[-5px_0_20px_rgba(0,0,0,0.06)] overflow-hidden" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}>
-                        {/* Nuevo Patrón floral semi-transparente - Derecha */}
-                        <div className="absolute inset-0 opacity-[0.9] bg-cover mix-blend-multiply right-0 w-[196%]" style={{ backgroundImage: floralPattern, backgroundPosition: 'right center' }}></div>
+                    <div className="absolute inset-0 bg-[#f9f8f6] md:rounded-r-xl border-l-[0.5px] border-[#e5d5c5]/80 shadow-[-5px_0_20px_rgba(0,0,0,0.06)] overflow-hidden">
+                        <div className="absolute top-0 bottom-0 right-0 bg-cover bg-no-repeat bg-center w-[196.1%]" style={{ backgroundImage: floralPattern }}></div>
                     </div>
                 </div>
 
-                {/* CUERDA HORIZONTAL TEXTURIZADA MULTI-SEGMENTO */}
+                {/* SIMULACIÓN DE CUERDA (CANVAS) Y CONTROLES */}
                 <div
-                    className={`absolute top-[50%] left-0 right-0 h-10 w-full -translate-y-1/2 z-30 transition-opacity duration-[400ms] ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                    ref={containerRef}
+                    className={`absolute inset-0 z-30 pointer-events-none transition-opacity duration-[1200ms] ${isOpen ? 'opacity-0' : 'opacity-100'}`}
                 >
-                    {/* Mitad Izquierda de la Cuerda */}
-                    <div className={`absolute left-0 w-[73%] h-0 top-1/2 -translate-y-1/2 transition-all duration-[2400ms] ease-[cubic-bezier(0.3,0,0.2,1)] ${isCut ? 'translate-y-[28vh] opacity-0 delay-[200ms]' : 'translate-y-0 opacity-100 delay-0'}`}>
-                        <FlexibleRope isCut={isCut} side="left" segments={5} />
-                    </div>
+                    <canvas
+                        ref={canvasRef}
+                        className="absolute w-full h-full"
+                    />
 
-                    {/* Mitad Derecha de la Cuerda */}
-                    <div className={`absolute right-0 w-[27%] h-0 top-1/2 -translate-y-1/2 transition-all duration-[2000ms] ease-[cubic-bezier(0.3,0,0.2,1)] ${isCut ? 'translate-y-[28vh] opacity-0 delay-[100ms]' : 'translate-y-0 opacity-100 delay-0'}`}>
-                        <FlexibleRope isCut={isCut} side="right" segments={4} />
-                    </div>
-
-                    {/* Área Interactiva de CORTE (Tijeras) posicionada en el borde de corte Z-50 */}
+                    {/* Área Interactiva de CORTE (Tijeras) posicionada en el lado derecho */}
                     <div
-                        className={`absolute top-1/2 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 z-50 group ${isCut ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100 hover:scale-110 active:scale-90'}`}
-                        style={{ left: '73%', transform: 'translate(-50%, -50%)' }}
+                        className={`absolute top-1/2 flex flex-col items-center justify-center cursor-pointer pointer-events-auto transition-all duration-300 z-50 group hover:-translate-y-1 ${isCut ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100 hover:scale-110 active:scale-90'}`}
+                        style={{ left: '75%', transform: 'translate(-50%, -50%)' }}
                         onClick={handleCut}
                     >
                         {/* Marco pulsante de corte */}
@@ -106,7 +377,7 @@ export default function Envelope({ onOpen }) {
                     <img
                         src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/ebc182e5-b02d-45ca-9652-1b8c9bfe09c6.png"
                         alt="Sello de cera"
-                        className="w-52 md:w-64 h-auto select-none"
+                        className="w-32 md:w-40 h-auto select-none"
                         style={{ filter: 'drop-shadow(0px 10px 15px rgba(0,0,0,0.35))' }}
                         draggable={false}
                     />
@@ -115,49 +386,4 @@ export default function Envelope({ onOpen }) {
             </div>
         </div>
     );
-}
-
-/* =========================================================
-   COMPONENTE AUXILIAR PARA LA FÍSICA DE LA CUERDA MULTI-NODO
-   ========================================================= */
-function FlexibleRope({ isCut, side, segments }) {
-    const renderSegment = (current) => {
-        if (current >= segments) return null;
-        const isLeft = side === 'left';
-        const isFirst = current === 0;
-
-        const duration = 800 + current * 200; // MUCH slower, smoother transition
-        const delay = isCut ? current * 80 : 0; // Longer delay between nodes = smoother whip
-
-        // Rotaciones progresivas para simular una curva "Whip"
-        let rot = 0;
-        if (isCut) {
-            const rots = isLeft ? [75, 15, 10, 6, 4] : [-75, -20, -10, -5];
-            rot = rots[current] || (isLeft ? 4 : -4);
-        }
-
-        const origin = isLeft ? 'origin-left' : 'origin-right';
-        const position = isFirst
-            ? (isLeft ? 'left-0' : 'right-0')
-            : (isLeft ? 'left-[99%]' : 'right-[99%]');
-
-        // El primer segmento ocupa su fracción, los sucesivos heredan ocupando el 100%
-        const wStr = isFirst ? `${100 / segments + 0.5}%` : `100%`;
-
-        return (
-            <div
-                className={`absolute top-0 ${position} h-[5px] rope-pattern overflow-visible ${origin} transition-transform ease-[cubic-bezier(0.3,0,0.2,1)]`}
-                style={{
-                    width: wStr,
-                    transform: `rotate(${rot}deg)`,
-                    transitionDuration: `${duration}ms`,
-                    transitionDelay: `${delay}ms`
-                }}
-            >
-                {renderSegment(current + 1)}
-            </div>
-        );
-    };
-
-    return renderSegment(0);
 }

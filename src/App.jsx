@@ -3,7 +3,7 @@ import Invitation from "./components/Invitation"
 import Envelope from "./components/Envelope"
 
 const BG_IMAGE =
-  "https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/dcfd9c52-fb5b-4766-817a-24807c909752.png"
+  "https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/fondo%20pagina.png"
 
 function App() {
   const [isReady, setIsReady] = useState(false)
