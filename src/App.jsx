@@ -8,6 +8,7 @@ const BG_IMAGE =
 function App() {
   const [isReady, setIsReady] = useState(false)
   const [envelopeOpen, setEnvelopeOpen] = useState(false)
+  const [envelopeUnmounted, setEnvelopeUnmounted] = useState(false)
 
   useEffect(() => {
     // Retrasar el inicio de la animación para que el usuario perciba el blanco sólido primero
@@ -17,12 +18,9 @@ function App() {
 
   return (
     <div
-      className={`invitation-scene relative min-h-screen w-full overflow-x-hidden overflow-y-auto ${isReady ? "is-ready" : ""}`}
+      className={`invitation-scene relative min-h-screen w-full overflow-x-hidden overflow-y-auto bg-no-repeat bg-bottom md:bg-center bg-[length:100%_auto] md:bg-cover bg-scroll md:bg-fixed ${isReady ? "is-ready" : ""}`}
       style={{
         backgroundImage: `url(${BG_IMAGE})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
         backgroundColor: "#f4f1ea",
       }}
     >
@@ -30,8 +28,11 @@ function App() {
       <div className="loader-overlay" aria-hidden />
 
       {/* Componente del sobre (Intercepta todo hasta que se abre) */}
-      {!envelopeOpen && (
-        <Envelope onOpen={() => setEnvelopeOpen(true)} />
+      {!envelopeUnmounted && (
+        <Envelope
+          onReveal={() => setEnvelopeOpen(true)}
+          onComplete={() => setEnvelopeUnmounted(true)}
+        />
       )}
 
       {/* La invitación real (Siempre visible en el fondo, se revela a través del sobre transparente) */}

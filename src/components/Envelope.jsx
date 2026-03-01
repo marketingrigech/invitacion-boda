@@ -41,7 +41,7 @@ class Particle {
     }
 }
 
-export default function Envelope({ onOpen }) {
+export default function Envelope({ onOpen, onReveal, onComplete }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isCut, setIsCut] = useState(false);
 
@@ -294,26 +294,27 @@ export default function Envelope({ onOpen }) {
 
         setTimeout(() => {
             setIsOpen(true);
+
+            // Cuando las puertas están abiertas al máximo y el sobre empieza a desvanecerse
             setTimeout(() => {
-                if (onOpen) onOpen();
-            }, 3500);
+                if (onReveal) onReveal();
+                if (onOpen) onOpen(); // Por compatibilidad
+            }, 1800);
+
+            // Desmontar completamente cuando el sobre ya no es visible
+            setTimeout(() => {
+                if (onComplete) onComplete();
+            }, 4500);
         }, 1800);
     };
     const floralPattern = "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/fondos%20puertas.png')";
+    const interiorPattern = "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/dcfd9c52-fb5b-4766-817a-24807c909752.png')";
 
     return (
         <div className={`fixed inset-0 z-50 overflow-hidden flex items-center justify-center transition-all duration-[2000ms] ${isOpen ? 'pointer-events-none opacity-0 delay-[2500ms]' : 'opacity-100 delay-0'}`}>
 
             {/* FONDO OPACO / BLUR INICIAL */}
             <div className={`absolute inset-0 transition-opacity duration-[1000ms] ease-in-out pointer-events-none ${isOpen ? 'opacity-0 delay-0' : 'bg-white/80 backdrop-blur-md opacity-100 delay-0'}`}></div>
-
-            {/* DESTELLO DE LUZ MÁGICA */}
-            <div
-                className={`absolute inset-0 z-10 transition-all ease-in-out pointer-events-none mix-blend-screen ${isOpen ? 'bg-white/80 opacity-100 duration-[1500ms] delay-[800ms]' : 'bg-white/0 opacity-0 duration-0 delay-0'}`}
-                style={{
-                    background: isOpen ? 'radial-gradient(circle at center, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 40%, rgba(255,255,255,0) 100%)' : 'none',
-                }}
-            ></div>
 
             {/* Contenedor del sobre */}
             <div
@@ -323,13 +324,19 @@ export default function Envelope({ onOpen }) {
                 {/* Sombra del sobre */}
                 <div className={`absolute inset-0 md:rounded-xl bg-transparent transition-shadow duration-[1000ms] ${isOpen ? 'shadow-none' : 'shadow-[0_20px_60px_rgba(200,190,180,0.3)]'}`}></div>
 
+                {/* INTERIOR DEL SOBRE */}
+                <div className="absolute inset-0 bg-[#f9f8f6] md:rounded-xl overflow-hidden z-10 border-[0.5px] border-[#e5d5c5]/80">
+                    <div className="absolute inset-0 bg-[length:100%_100%] md:bg-cover bg-no-repeat bg-center" style={{ backgroundImage: interiorPattern }}></div>
+                    <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.1)] pointer-events-none"></div>
+                </div>
+
                 {/* SOLAPA IZQUIERDA */}
                 <div
                     className={`absolute top-0 bottom-0 left-0 w-[50%] md:w-[50%] origin-left z-20 transition-transform duration-[2500ms] ease-[cubic-bezier(0.25,1,0.5,1)] ${isOpen ? 'delay-[700ms]' : 'delay-0'}`}
                     style={{ transform: isOpen ? 'rotateY(-140deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
                 >
                     <div className="absolute inset-0 bg-[#f9f8f6] md:rounded-l-xl shadow-[5px_0_20px_rgba(0,0,0,0.06)] overflow-hidden border-r-[0.5px] border-[#e5d5c5]/80">
-                        <div className="absolute top-0 bottom-0 left-0 bg-cover bg-no-repeat bg-center w-[200%]" style={{ backgroundImage: floralPattern }}></div>
+                        <div className="absolute top-0 bottom-0 left-0 bg-[length:100%_100%] md:bg-cover bg-no-repeat bg-center w-[200%]" style={{ backgroundImage: floralPattern }}></div>
                     </div>
                 </div>
 
@@ -339,7 +346,7 @@ export default function Envelope({ onOpen }) {
                     style={{ transform: isOpen ? 'rotateY(140deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
                 >
                     <div className="absolute inset-0 bg-[#f9f8f6] md:rounded-r-xl border-l-[0.5px] border-[#e5d5c5]/80 shadow-[-5px_0_20px_rgba(0,0,0,0.06)] overflow-hidden">
-                        <div className="absolute top-0 bottom-0 right-0 bg-cover bg-no-repeat bg-center w-[196.1%]" style={{ backgroundImage: floralPattern }}></div>
+                        <div className="absolute top-0 bottom-0 right-0 bg-[length:100%_100%] md:bg-cover bg-no-repeat bg-center w-[196.1%]" style={{ backgroundImage: floralPattern }}></div>
                     </div>
                 </div>
 
@@ -363,8 +370,9 @@ export default function Envelope({ onOpen }) {
                         <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-dashed border-[#a0937d]/80 bg-white/40 backdrop-blur-sm flex items-center justify-center shadow-lg relative animate-pulse">
                             <span className="text-xl md:text-2xl group-hover:-rotate-[30deg] group-active:-rotate-[60deg] transition-transform duration-200 relative top-[-1px]">✂️</span>
                         </div>
-                        <div className="absolute top-14 md:top-16 text-[#857b68] text-[9px] md:text-[10px] font-sans font-bold tracking-[0.2em] uppercase whitespace-nowrap bg-white/90 px-3 py-1 rounded-sm shadow-sm opacity-80 group-hover:opacity-100">
-                            Corta Aquí
+                        <div className="absolute top-14 md:top-16 text-[#857b68] text-[9px] md:text-[10px] font-sans font-bold tracking-[0.2em] uppercase text-center bg-white/90 px-3 py-1.5 rounded-sm shadow-sm opacity-80 group-hover:opacity-100 flex flex-col items-center leading-tight">
+                            <span>Pulsa aquí</span>
+                            <span>para cortar</span>
                         </div>
                     </div>
                 </div>
