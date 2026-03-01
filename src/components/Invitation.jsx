@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 function FadeInSection({ children, className = "", delay = "0ms" }) {
   const domRef = useRef()
@@ -25,14 +25,24 @@ function FadeInSection({ children, className = "", delay = "0ms" }) {
   )
 }
 
-function Invitation() {
+function Invitation({ envelopeOpen }) {
+  const [showCard, setShowCard] = useState(false);
+
+  useEffect(() => {
+    // Cuando el sobre ya está abierto, esperamos 1.5s admirando la imagen de Jesús profunda antes de desvelar la tarjeta
+    if (envelopeOpen) {
+      const timer = setTimeout(() => setShowCard(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [envelopeOpen]);
+
   return (
     <div className="w-full min-h-screen py-10 flex items-center justify-center px-4">
 
-      {/* TARJETA FÍSICA INVITACIÓN */}
-      <div className="relative w-full max-w-lg bg-[#fbfaf9] shadow-[0_10px_40px_rgba(0,0,0,0.15)] rounded-sm overflow-hidden flex flex-col items-center pt-16 pb-20 px-6 sm:px-12 text-center animate-fade-in-up">
+      {/* TARJETA FÍSICA INVITACIÓN (Fondo blanco original, aparece sin deslizar) */}
+      <div className={`relative w-full max-w-lg bg-[#fbfaf9] shadow-[0_10px_40px_rgba(0,0,0,0.15)] rounded-sm overflow-hidden flex flex-col items-center pt-16 pb-20 px-6 sm:px-12 text-center transition-all duration-[1500ms] ease-out ${showCard ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95 pointer-events-none'}`}>
 
-        {/* Textura de ruido suave (opcional para dar efecto papel) */}
+        {/* Textura de ruido suave (efecto papel crema) */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cream-paper.png")' }}></div>
 
         {/* Borde interior elegante */}
@@ -88,7 +98,6 @@ function Invitation() {
               </button>
             </div>
           </FadeInSection>
-
         </div>
       </div>
     </div>

@@ -17,16 +17,15 @@ function App() {
 
   return (
     <div
-      className={`invitation-scene relative min-h-screen w-full overflow-hidden ${isReady ? "is-ready" : ""}`}
+      className={`invitation-scene relative min-h-screen w-full overflow-x-hidden overflow-y-auto ${isReady ? "is-ready" : ""}`}
       style={{
-        "--paper-image": `url(${BG_IMAGE})`,
-        backgroundColor: "#f8f4f0",
+        backgroundImage: `url(${BG_IMAGE})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+        backgroundColor: "#f4f1ea",
       }}
     >
-      {/* Fondos estáticos de la carta */}
-      <div className="paper-bg" aria-hidden />
-      <div className="paper-emboss" aria-hidden />
-
       {/* El flash blanco inicial */}
       <div className="loader-overlay" aria-hidden />
 
@@ -35,9 +34,9 @@ function App() {
         <Envelope onOpen={() => setEnvelopeOpen(true)} />
       )}
 
-      {/* La invitación real (Pasa al frente cuando se abre el sobre) */}
-      <div className={`relative z-20 transition-opacity duration-1000 ${envelopeOpen ? 'opacity-100' : 'opacity-0'}`}>
-        <Invitation />
+      {/* La invitación real (Siempre visible en el fondo, se revela a través del sobre transparente) */}
+      <div className="relative z-20">
+        <Invitation envelopeOpen={envelopeOpen} />
       </div>
 
     </div>
