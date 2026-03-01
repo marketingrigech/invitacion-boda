@@ -112,7 +112,7 @@ function Invitation({ envelopeOpen }) {
         <div className="relative z-10 w-full flex flex-col items-center">
 
           <FadeInSection className="w-full mb-14" delay="200ms">
-            <div className="w-[calc(100%+48px)] sm:w-[calc(100%+96px)] -mx-6 sm:-mx-12 -mt-16 mb-2 overflow-hidden relative z-10 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border-b-[0.5px] border-[#e5d5c5]/60">
+            <div className="w-[calc(100%+48px)] sm:w-[calc(100%+96px)] -mx-6 sm:-mx-12 -mt-16 mb-4 overflow-hidden relative z-10 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border-b-[0.5px] border-[#e5d5c5]/60">
               <img
                 src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/NOS%20CASAMOS%20(1).png"
                 alt="Lis y Juanjo"
@@ -120,18 +120,113 @@ function Invitation({ envelopeOpen }) {
               />
             </div>
 
-            <div className="flex justify-center w-full mb-2 mt-0 px-4 relative z-20">
+            <div className="flex justify-center w-full mb-2 mt-2 px-4 relative z-20">
               <img
                 src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/lis%20y%20juanjo.png"
                 alt="Firma Lis y Juanjo"
                 className="w-full max-w-[320px] sm:max-w-[400px] h-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)] scale-125 transition-transform hover:scale-[1.3] duration-700"
               />
             </div>
-            <p className="text-sm sm:text-base text-wine-dark/70 italic font-serif mt-6">Acompáñanos a celebrar nuestro día</p>
+
+            <p className="text-sm sm:text-base text-wine-dark/70 italic font-serif mt-10">Acompáñanos a celebrar nuestro día</p>
+          </FadeInSection>
+
+          {/* SECCIÓN NUESTRA HISTORIA 1: PRAGA */}
+          <FadeInSection className="w-full mb-20" delay="300ms">
+            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Cómo nos conocimos</h2>
+            <div className="max-w-md mx-auto mb-10">
+              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+                Nuestras miradas se cruzaron por primera vez entre la magia de Praga y el aroma de su invierno.
+                Aunque nuestras vidas parecían seguir rumbos distintos, aquel encuentro marcó el inicio de algo que ninguno de los dos pudo ignorar.
+              </p>
+            </div>
+
+            <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
+              <img
+                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/0a8969cf-b428-49bf-bef4-f9b7db8d2b66.png"
+                alt="Nuestra historia"
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          </FadeInSection>
+
+          {/* SECCIÓN NUESTRA HISTORIA 2: DISTANCIA */}
+          <FadeInSection className="w-full mb-20" delay="300ms">
+            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">La distancia no fue barrera</h2>
+            <div className="max-w-md mx-auto mb-10 px-4">
+              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+                Nuestra historia continuaba: Ella en Madrid y Juanjo en Barcelona.
+                Cientos de kilómetros, infinitas llamadas y billetes de tren que acortaban la espera entre dos corazones que ya no sabían estar separados.
+              </p>
+            </div>
+
+            <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
+              <img
+                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/8cadf582-8daa-4353-b237-2b4e7759596a.png"
+                alt="La distancia"
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          </FadeInSection>
+
+          {/* SECCIÓN NUESTRA HISTORIA 3: EL SACRIFICIO */}
+          <FadeInSection className="w-full mb-20" delay="300ms">
+            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Todo por amor</h2>
+            <div className="max-w-md mx-auto mb-10 px-4">
+              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+                Llegó el momento de tomar una de las decisiones más valientes. Juanjo lo dejó todo por amor,
+                cerrando una etapa en Barcelona para apostar por un futuro juntos, demostrando que cuando el sentimiento es real, el hogar está donde esté la otra persona.
+              </p>
+            </div>
+
+            <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
+              <img
+                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/63a2cf6c-5515-4343-b505-8f00be458419.png"
+                alt="Sacrificio por amor"
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          </FadeInSection>
+
+          {/* SECCIÓN NUESTRA HISTORIA 4: EL HOGAR */}
+          <FadeInSection className="w-full mb-20" delay="300ms">
+            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Creamos un hogar</h2>
+            <div className="max-w-md mx-auto mb-10 px-4">
+              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+                Poco a poco, fuimos construyendo nuestro propio mundo, llenando cada rincón de sueños, risas y proyectos compartidos.
+                Hoy, nuestro hogar es el refugio donde celebramos la vida cada día.
+              </p>
+            </div>
+
+            <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
+              <img
+                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/72f6c064-bed0-458c-90d4-dfa0e525aca0.png"
+                alt="Nuestro hogar"
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          </FadeInSection>
+
+          {/* SECCIÓN NUESTRA HISTORIA 5: TU PARTE */}
+          <FadeInSection className="w-full mb-20" delay="300ms">
+            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Sé parte de nosotros</h2>
+            <div className="max-w-md mx-auto mb-10 px-4">
+              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+                Ahora queremos que tú seas parte de nuestra historia. Este capítulo final no estaría completo sin tu presencia en el día más importante de nuestras vidas.
+              </p>
+            </div>
+
+            <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
+              <img
+                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/d9b6e4aa-df92-467e-8f3f-a62bd5652f6d.png"
+                alt="Sé parte de nuestra historia"
+                className="w-full h-auto object-cover"
+              />
+            </div>
           </FadeInSection>
 
           {/* Adorno decorativo */}
-          <FadeInSection className="w-full flex justify-center mb-12" delay="300ms">
+          <FadeInSection className="w-full flex justify-center mb-12" delay="400ms">
             <div className="w-24 h-24 sm:w-28 sm:h-28 opacity-30 bg-grape-pattern bg-center bg-contain bg-no-repeat"></div>
           </FadeInSection>
 
