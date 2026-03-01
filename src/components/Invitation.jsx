@@ -31,6 +31,7 @@ function Invitation({ envelopeOpen }) {
   const [showGuestName, setShowGuestName] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const [showCard, setShowCard] = useState(false);
+  const [dressGender, setDressGender] = useState('Mujer');
 
   useEffect(() => {
     // Cuando el sobre ya está abierto, revelamos secuencialmente los mensajes y la tarjeta
@@ -208,7 +209,7 @@ function Invitation({ envelopeOpen }) {
           </FadeInSection>
 
           {/* SECCIÓN NUESTRA HISTORIA 5: TU PARTE */}
-          <FadeInSection className="w-full mb-20" delay="300ms">
+          <FadeInSection className="w-full mb-12" delay="300ms">
             <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Sé parte de nosotros</h2>
             <div className="max-w-md mx-auto mb-10 px-4">
               <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
@@ -225,45 +226,145 @@ function Invitation({ envelopeOpen }) {
             </div>
           </FadeInSection>
 
-          {/* Adorno decorativo */}
-          <FadeInSection className="w-full flex justify-center mb-12" delay="400ms">
-            <div className="w-24 h-24 sm:w-28 sm:h-28 opacity-30 bg-grape-pattern bg-center bg-contain bg-no-repeat"></div>
+          {/* FECHA Y HORA */}
+          <FadeInSection className="w-full mb-16 mt-8" delay="400ms">
+            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-10">Guárdate este día</h2>
+
+            <div className="flex justify-center w-full px-8 mb-10">
+              <img
+                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/FECHA.png"
+                alt="Calendario"
+                className="w-full max-w-[280px] sm:max-w-[320px] opacity-90 scale-110 mix-blend-multiply"
+              />
+            </div>
+
+            <div className="flex flex-col items-center mt-6">
+              <p className="text-3xl sm:text-4xl md:text-5xl font-sans font-light text-wine mb-2 tracking-[0.15em] sm:tracking-[0.2em] whitespace-nowrap">19 - 09 - 2026</p>
+              <p className="text-lg sm:text-xl uppercase tracking-widest text-wine-dark/80 mb-6 mt-2 font-medium">A las 17:00 hrs</p>
+            </div>
           </FadeInSection>
 
-          {/* FECHA Y HORA */}
-          <FadeInSection className="w-full mb-14" delay="400ms">
+          {/* DÓNDE SERÁ */}
+          <FadeInSection className="w-full mb-16" delay="500ms">
+            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">¿Dónde será?</h2>
             <div className="flex flex-col items-center">
-              <p className="text-xl sm:text-2xl font-serif text-wine-dark mb-1">Sábado</p>
-              <p className="text-5xl sm:text-6xl font-serif text-wine mb-2">24</p>
-              <p className="text-sm sm:text-base uppercase tracking-widest text-wine-dark/80 mb-6">Octubre 2026</p>
+              <p className="text-lg sm:text-xl text-wine-dark/80 font-serif italic mb-6 text-center max-w-sm">
+                Calle travesía del oxígeno 1
+              </p>
 
-              <div className="w-16 h-[1px] bg-wine/30 mx-auto mb-6"></div>
-
-              <p className="font-semibold text-wine-dark mb-1 tracking-wide">Ceremonia 18:00 hrs</p>
-              <p className="text-sm text-wine-dark/70 mb-6 font-serif italic">Hacienda El Refugio, Ciudad de México</p>
-
-              <button className="bg-wine text-cream px-8 py-2.5 rounded-sm text-xs sm:text-sm uppercase tracking-widest hover:bg-wine-dark hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 mt-2">
+              <button
+                className="bg-wine text-cream px-8 py-3 rounded-sm text-xs sm:text-sm uppercase tracking-widest hover:bg-wine-dark hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+                onClick={() => window.open("https://maps.google.com/?q=Calle+travesia+del+oxigeno+1", "_blank")}
+              >
                 Ver en Mapa
               </button>
             </div>
           </FadeInSection>
 
           {/* CÓDIGO DE VESTIMENTA */}
-          <FadeInSection className="w-full mb-12" delay="500ms">
-            <h2 className="text-xl sm:text-2xl font-serif text-wine mb-4">Código de Vestimenta</h2>
-            <p className="text-sm tracking-[0.15em] uppercase text-wine-dark/80 mb-2 font-medium">Formal / Elegante</p>
-            <p className="text-xs text-wine-dark/60 italic font-serif">Por favor, reserva el blanco para la novia.</p>
+          <FadeInSection className="w-full mb-16" delay="500ms">
+            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Cómo ir vestido</h2>
+
+            {/* Toggle */}
+            <div className="flex justify-center mb-8">
+              <div className="bg-[#e5d5c5]/20 p-1 rounded-sm inline-flex border border-[#e5d5c5]/60 shadow-inner">
+                <button
+                  onClick={() => setDressGender('Mujer')}
+                  className={`px-8 py-2 text-sm uppercase tracking-widest transition-all duration-300 ${dressGender === 'Mujer' ? 'bg-wine text-cream shadow-sm rounded-[1px]' : 'text-wine-dark/70 hover:text-wine'}`}
+                >
+                  Mujer
+                </button>
+                <button
+                  onClick={() => setDressGender('Hombre')}
+                  className={`px-8 py-2 text-sm uppercase tracking-widest transition-all duration-300 ${dressGender === 'Hombre' ? 'bg-wine text-cream shadow-sm rounded-[1px]' : 'text-wine-dark/70 hover:text-wine'}`}
+                >
+                  Hombre
+                </button>
+              </div>
+            </div>
+
+            {/* Carousel */}
+            <div className="w-full overflow-hidden">
+              <div className="flex w-full gap-4 overflow-x-auto snap-x snap-mandatory pb-6 px-4 -mx-4 hide-scrollbar justify-start md:justify-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {dressGender === 'Mujer' ? (
+                  <>
+                    <img src="https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 1" />
+                    <img src="https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 2" />
+                    <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 3" />
+                  </>
+                ) : (
+                  <>
+                    <img src="https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 1" />
+                    <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 2" />
+                    <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 3" />
+                  </>
+                )}
+              </div>
+            </div>
           </FadeInSection>
 
-          {/* RSVP */}
-          <FadeInSection className="w-full mt-4" delay="600ms">
-            <div className="w-full border-t border-wine/10 pt-10">
-              <h2 className="text-xl sm:text-2xl font-serif text-wine mb-4">Asistencia</h2>
-              <p className="text-sm text-wine-dark/70 mb-8 font-serif italic px-4">Para nosotros es muy importante saber si nos acompañarás en este día tan especial.</p>
-              <button className="bg-transparent border border-wine text-wine px-10 py-3 rounded-sm text-xs sm:text-sm uppercase tracking-widest hover:bg-wine hover:text-cream transition-all duration-300">
-                Confirmar RSVP
-              </button>
+          {/* REGALO */}
+          <FadeInSection className="w-full mb-16" delay="600ms">
+            <div className="w-full border-y border-[#e5d5c5]/60 py-10 bg-[#e5d5c5]/10 px-6 rounded-sm">
+              <h2 className="text-2xl sm:text-3xl font-serif text-wine mb-4">Sobre el regalo</h2>
+              <p className="text-sm text-wine-dark/80 mb-6 font-serif italic max-w-sm mx-auto">
+                Vuestra presencia es el mejor regalo que podríamos pedir.
+                Sin embargo, si deseáis hacernos un detalle, os dejamos nuestro número de cuenta:
+              </p>
+              <div className="bg-white/60 p-4 rounded-sm border border-wine/10 inline-block text-sm sm:text-base text-wine-dark break-all">
+                Transferencia bancaria a IBAN:<br />
+                <span className="font-bold tracking-widest mt-2 inline-block font-mono text-base md:text-lg text-wine">xxxxxxxxx</span>
+              </div>
             </div>
+          </FadeInSection>
+
+          {/* RSVP FORM */}
+          <FadeInSection className="w-full mb-16" delay="700ms">
+            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-2">Asistencia</h2>
+            <p className="text-sm text-wine-dark/70 mb-8 font-serif italic px-4">Por favor, confirma tu asistencia para que podamos organizar los detalles.</p>
+            <form className="w-full max-w-sm mx-auto flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
+              <div className="flex flex-col text-left">
+                <label className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium">Nombre completo</label>
+                <input
+                  type="text"
+                  className="w-full border-b-[1.5px] border-wine/30 bg-transparent py-2 px-1 text-wine-dark focus:outline-none focus:border-wine transition-colors placeholder:text-wine/30 font-serif italic"
+                  placeholder="Escribe tu nombre y apellidos"
+                  required
+                />
+              </div>
+
+              <label className="flex items-center gap-3 text-left mt-2 cursor-pointer group">
+                <div className="relative flex items-center justify-center w-5 h-5">
+                  <input
+                    type="checkbox"
+                    className="peer appearance-none w-5 h-5 border-[1.5px] border-wine/40 rounded-[2px] checked:bg-wine checked:border-wine cursor-pointer transition-all focus:outline-none"
+                  />
+                  <div className="absolute text-cream pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                  </div>
+                </div>
+                <span className="text-sm font-serif italic text-wine-dark/80 group-hover:text-wine transition-colors cursor-pointer">
+                  Voy con un acompañante
+                </span>
+              </label>
+
+              <button
+                type="submit"
+                className="mt-6 w-full bg-transparent border border-wine text-wine px-10 py-3.5 rounded-sm text-sm uppercase tracking-widest hover:bg-wine hover:text-cream transition-all duration-300"
+              >
+                Confirmar Asistencia
+              </button>
+            </form>
+          </FadeInSection>
+
+          {/* CIERRE EPICO */}
+          <FadeInSection className="w-full pb-6" delay="800ms">
+            <div className="w-16 h-[1px] bg-wine/30 mx-auto mb-10"></div>
+            <h2 className="text-6xl sm:text-7xl font-serif text-wine mb-6 mt-2 !leading-tight">Te esperamos</h2>
+            <div className="flex justify-center mb-6">
+              <svg className="w-8 h-8 text-wine/50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+            </div>
+            <p className="text-xs sm:text-sm uppercase tracking-[0.4em] text-wine-dark/50 font-medium">Con muchísimo amor</p>
           </FadeInSection>
         </div>
       </div>
