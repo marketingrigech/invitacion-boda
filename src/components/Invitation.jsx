@@ -238,9 +238,17 @@ function Invitation({ envelopeOpen }) {
               />
             </div>
 
-            <div className="flex flex-col items-center mt-6">
-              <p className="text-3xl sm:text-4xl md:text-5xl font-sans font-light text-wine mb-2 tracking-[0.15em] sm:tracking-[0.2em] whitespace-nowrap">19 - 09 - 2026</p>
-              <p className="text-lg sm:text-xl uppercase tracking-widest text-wine-dark/80 mb-6 mt-2 font-medium">A las 17:00 hrs</p>
+            <div className="flex flex-col items-center mt-6 w-full px-4">
+              <div className="relative overflow-hidden bg-[#faf8f5] border-[0.5px] border-[#e5d5c5]/80 shadow-[0_4px_15px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.03)] rounded-sm py-8 px-6 sm:px-12 w-full max-w-sm flex flex-col items-center mx-auto">
+                {/* Textura de papel para el cuadro */}
+                <div className="absolute inset-0 opacity-40 pointer-events-none mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cream-paper.png")' }}></div>
+
+                <div className="relative z-10 flex flex-col items-center w-full">
+                  <p className="text-3xl sm:text-4xl md:text-5xl font-sans font-light text-wine mb-2 tracking-[0.15em] sm:tracking-[0.2em] whitespace-nowrap">19 - 09 - 2026</p>
+                  <div className="w-16 h-[1px] bg-wine/30 mx-auto my-3"></div>
+                  <p className="text-lg sm:text-xl uppercase tracking-widest text-wine-dark/80 font-medium text-center">A las 17:00 hrs</p>
+                </div>
+              </div>
             </div>
           </FadeInSection>
 
