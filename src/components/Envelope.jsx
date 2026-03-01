@@ -326,7 +326,7 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
 
                 {/* INTERIOR DEL SOBRE */}
                 <div className="absolute inset-0 bg-[#f9f8f6] md:rounded-xl overflow-hidden z-10 border-[0.5px] border-[#e5d5c5]/80">
-                    <div className="absolute inset-0 bg-[length:100%_100%] md:bg-cover bg-no-repeat bg-center" style={{ backgroundImage: interiorPattern }}></div>
+                    <div className="absolute inset-0 bg-cover bg-no-repeat bg-center" style={{ backgroundImage: interiorPattern }}></div>
                     <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.1)] pointer-events-none"></div>
                 </div>
 
@@ -336,7 +336,7 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
                     style={{ transform: isOpen ? 'rotateY(-140deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
                 >
                     <div className="absolute inset-0 bg-[#f9f8f6] md:rounded-l-xl shadow-[5px_0_20px_rgba(0,0,0,0.06)] overflow-hidden border-r-[0.5px] border-[#e5d5c5]/80">
-                        <div className="absolute top-0 bottom-0 left-0 bg-[length:100%_100%] md:bg-cover bg-no-repeat bg-center w-[200%]" style={{ backgroundImage: floralPattern }}></div>
+                        <div className="absolute top-0 bottom-0 left-0 bg-cover bg-no-repeat bg-center w-[200%]" style={{ backgroundImage: floralPattern }}></div>
                     </div>
                 </div>
 
@@ -346,7 +346,7 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
                     style={{ transform: isOpen ? 'rotateY(140deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
                 >
                     <div className="absolute inset-0 bg-[#f9f8f6] md:rounded-r-xl border-l-[0.5px] border-[#e5d5c5]/80 shadow-[-5px_0_20px_rgba(0,0,0,0.06)] overflow-hidden">
-                        <div className="absolute top-0 bottom-0 right-0 bg-[length:100%_100%] md:bg-cover bg-no-repeat bg-center w-[196.1%]" style={{ backgroundImage: floralPattern }}></div>
+                        <div className="absolute top-0 bottom-0 right-0 bg-cover bg-no-repeat bg-center w-[196.1%]" style={{ backgroundImage: floralPattern }}></div>
                     </div>
                 </div>
 

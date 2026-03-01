@@ -292,6 +292,15 @@ function Invitation({ envelopeOpen }) {
                 Calle travesía del oxígeno 1
               </p>
 
+              <div className="w-[calc(100%+24px)] md:w-full max-w-md -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5 mb-8">
+                <img
+                  src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/Captura%20de%20pantalla%202026-03-01%20165221.png"
+                  alt="Mapa de ubicación"
+                  className="w-full h-auto object-cover cursor-pointer hover:opacity-95 transition-opacity duration-300"
+                  onClick={() => window.open("https://maps.google.com/?q=Calle+travesia+del+oxigeno+1", "_blank")}
+                />
+              </div>
+
               <button
                 className="bg-wine text-cream px-8 py-3 rounded-sm text-xs sm:text-sm uppercase tracking-widest hover:bg-wine-dark hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
                 onClick={() => window.open("https://maps.google.com/?q=Calle+travesia+del+oxigeno+1", "_blank")}
