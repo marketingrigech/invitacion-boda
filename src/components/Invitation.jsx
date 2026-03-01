@@ -33,6 +33,38 @@ function Invitation({ envelopeOpen }) {
   const [showCard, setShowCard] = useState(false);
   const [dressGender, setDressGender] = useState('Mujer');
 
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  function calculateTimeLeft() {
+    // 10 de mayo de 2026 a las 23:59:59
+    const targetDate = new Date("2026-05-10T23:59:59").getTime();
+    const now = new Date().getTime();
+    const difference = targetDate - now;
+
+    let timeLeftResult = {};
+
+    if (difference > 0) {
+      timeLeftResult = {
+        dias: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        horas: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutos: Math.floor((difference / 1000 / 60) % 60),
+        segundos: Math.floor((difference / 1000) % 60),
+      };
+    } else {
+      timeLeftResult = { dias: 0, horas: 0, minutos: 0, segundos: 0 };
+    }
+
+    return timeLeftResult;
+  }
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     // Cuando el sobre ya está abierto, revelamos secuencialmente los mensajes y la tarjeta
     if (envelopeOpen) {
@@ -326,10 +358,37 @@ function Invitation({ envelopeOpen }) {
             </div>
           </FadeInSection>
 
-          {/* RSVP FORM */}
+          {/* RSVP FORM Y COUNTDOWN */}
           <FadeInSection className="w-full mb-16" delay="700ms">
             <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-2">Asistencia</h2>
-            <p className="text-sm text-wine-dark/70 mb-8 font-serif italic px-4">Por favor, confirma tu asistencia para que podamos organizar los detalles.</p>
+            <p className="text-sm text-wine-dark/70 mb-4 font-serif italic px-4">Por favor, confirma tu asistencia para que podamos organizar los detalles.</p>
+
+            {/* COUNTDOWN */}
+            <div className="mb-8">
+              <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-wine-dark/80 mb-3 font-medium">Confirma antes del 10 de Mayo de 2026</p>
+              <div className="flex justify-center gap-3 sm:gap-6 font-serif">
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl sm:text-4xl text-wine">{timeLeft.dias || '0'}</span>
+                  <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Días</span>
+                </div>
+                <span className="text-2xl sm:text-4xl text-wine/30 mt-1">:</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl sm:text-4xl text-wine">{timeLeft.horas || '0'}</span>
+                  <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Hrs</span>
+                </div>
+                <span className="text-2xl sm:text-4xl text-wine/30 mt-1">:</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl sm:text-4xl text-wine">{timeLeft.minutos || '0'}</span>
+                  <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Min</span>
+                </div>
+                <span className="text-2xl sm:text-4xl text-wine/30 mt-1">:</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl sm:text-4xl text-wine">{timeLeft.segundos || '0'}</span>
+                  <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Seg</span>
+                </div>
+              </div>
+            </div>
+
             <form className="w-full max-w-sm mx-auto flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
               <div className="flex flex-col text-left">
                 <label className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium">Nombre completo</label>
@@ -337,6 +396,16 @@ function Invitation({ envelopeOpen }) {
                   type="text"
                   className="w-full border-b-[1.5px] border-wine/30 bg-transparent py-2 px-1 text-wine-dark focus:outline-none focus:border-wine transition-colors placeholder:text-wine/30 font-serif italic"
                   placeholder="Escribe tu nombre y apellidos"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col text-left">
+                <label className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium">Correo electrónico</label>
+                <input
+                  type="email"
+                  className="w-full border-b-[1.5px] border-wine/30 bg-transparent py-2 px-1 text-wine-dark focus:outline-none focus:border-wine transition-colors placeholder:text-wine/30 font-serif italic"
+                  placeholder="tu@correo.com"
                   required
                 />
               </div>
