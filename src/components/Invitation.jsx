@@ -713,22 +713,24 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 />
               </div>
 
-              <label className="flex items-center gap-3 text-left mt-2 cursor-pointer group">
-                <div className="relative flex items-center justify-center w-5 h-5">
-                  <input
-                    type="checkbox"
-                    checked={rsvpPlusOne}
-                    onChange={e => setRsvpPlusOne(e.target.checked)}
-                    className="peer appearance-none w-5 h-5 border-[1.5px] border-wine/40 rounded-[2px] checked:bg-wine checked:border-wine cursor-pointer transition-all focus:outline-none"
-                  />
-                  <div className="absolute text-cream pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+              {guestInfo.plusOne && (
+                <label className="flex items-center gap-3 text-left mt-2 cursor-pointer group">
+                  <div className="relative flex items-center justify-center w-5 h-5">
+                    <input
+                      type="checkbox"
+                      checked={rsvpPlusOne}
+                      onChange={e => setRsvpPlusOne(e.target.checked)}
+                      className="peer appearance-none w-5 h-5 border-[1.5px] border-wine/40 rounded-[2px] checked:bg-wine checked:border-wine cursor-pointer transition-all focus:outline-none"
+                    />
+                    <div className="absolute text-cream pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
                   </div>
-                </div>
-                <span className="text-sm font-serif italic text-wine-dark/80 group-hover:text-wine transition-colors cursor-pointer">
-                  Voy con un acompañante
-                </span>
-              </label>
+                  <span className="text-sm font-serif italic text-wine-dark/80 group-hover:text-wine transition-colors cursor-pointer">
+                    Voy con un acompañante
+                  </span>
+                </label>
+              )}
 
               {rsvpFeedback && (
                 <p
