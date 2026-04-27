@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 
 // Constantes de física de la cuerda
-const NUM_NODES = 40;
+const NUM_NODES = 30;          // Reducido de 40 → menos operaciones por frame
 const DAMPING = 0.96;
 const GRAVITY = 0.6;
-const IDLE_GRAVITY = 0.05; // Gravedad baja para mantenerla más tensa mientras reposa
-const STIFFNESS = 1.0; // Mayor rigidez
-const ITERATIONS = 40; // Mayor cantidad de iteraciones para dar aspecto estirado
-const ROPE_COLOR_BASE = '#8b7355'; // Color marrón más oscuro tipo cuerda vieja
-const ROPE_COLOR_HIGHLIGHT = '#a68a64'; // Trenzado oscurecido
+const IDLE_GRAVITY = 0.05;
+const STIFFNESS = 1.0;
+const ITERATIONS_IDLE = 6;    // Iteraciones cuando la cuerda reposa (antes: 40)
+const ITERATIONS_CUT = 22;    // Iteraciones cuando cae después del corte
+const ROPE_COLOR_BASE = '#8b7355';
+const ROPE_COLOR_HIGHLIGHT = '#a68a64';
 const ROPE_SHADOW = '#4a3b2b';
 
 // Clases de Simulación Física
@@ -47,6 +48,7 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
 
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
+    const isRunningRef = useRef(true); // false = detener el bucle RAF
 
     // Estado mutable para RAF (requestAnimationFrame)
     const stateRef = useRef({
@@ -123,8 +125,9 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
                 }
             }
 
-            // Constraints Verlet
-            for (let iter = 0; iter < ITERATIONS; iter++) {
+            // Constraints Verlet (menos iteraciones en reposo para ahorrar CPU)
+            const iters = state.isCut ? ITERATIONS_CUT : ITERATIONS_IDLE;
+            for (let iter = 0; iter < iters; iter++) {
                 for (let i = 0; i < state.nodes.length - 1; i++) {
                     if (state.isCut && i === state.cutIndex) continue; // Si está cortada, ignorar enlace
 
@@ -199,31 +202,26 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
         };
 
         const render = () => {
+            if (!isRunningRef.current) return; // Detener si el sobre ya se abrió
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const state = stateRef.current;
 
             updatePhysics();
 
-            // Efecto de sombra realista (más suave para cuerda más fina)
+            // Efecto de sombra realista
             ctx.shadowBlur = 4;
             ctx.shadowColor = 'rgba(0,0,0,0.5)';
             ctx.shadowOffsetY = 2;
 
-            // Capa 1: Contorno oscuro de la cuerda para sensación cilíndrica (3D)
             drawRopeOffset(ctx, state.nodes, state.cutIndex, state.isCut, 0, '#382a1c', 3.5);
 
             ctx.shadowColor = 'transparent';
 
-            // Capa 2: Base principal de la cuerda
             drawRopeOffset(ctx, state.nodes, state.cutIndex, state.isCut, 0, '#8c755c', 2.5);
-
-            // Capa 3: Trenzado claro (luces hiladas) en espiral
             drawRopeOffset(ctx, state.nodes, state.cutIndex, state.isCut, -0.5, '#cdae86', 1.5, [4, 4], 0);
-
-            // Capa 4: Trenzado oscuro (sombras hiladas) interceptadas
             drawRopeOffset(ctx, state.nodes, state.cutIndex, state.isCut, 0.5, '#5c4834', 1.5, [4, 4], 4);
 
-            // Dibujar partículas (fibras saltando) simulando hilo rasgado
             if (state.particles.length > 0) {
                 state.particles.forEach(p => {
                     ctx.fillStyle = `rgba(205, 174, 134, ${Math.max(0, p.life)})`;
@@ -233,7 +231,6 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
                 });
             }
 
-            // Circular flash blanco en el corte
             if (state.flashTimer > 0) {
                 const cutNode = state.nodes[state.cutIndex];
                 if (cutNode) {
@@ -247,11 +244,23 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
             animationFrameId = requestAnimationFrame(render);
         };
 
+        // Pausar cuando la pestaña no está visible para no consumir CPU en background
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                cancelAnimationFrame(animationFrameId);
+            } else if (isRunningRef.current) {
+                animationFrameId = requestAnimationFrame(render);
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
         render();
 
         return () => {
+            isRunningRef.current = false;
             resizeObserver.disconnect();
             cancelAnimationFrame(animationFrameId);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
     }, []);
 
@@ -294,17 +303,20 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
         setTimeout(() => {
             setIsOpen(true);
 
-            // Cuando las puertas están abiertas al máximo y el sobre empieza a desvanecerse
+            // Detener el bucle de física: las puertas ya usan CSS transitions, no canvas
+            setTimeout(() => {
+                isRunningRef.current = false;
+            }, 400);
+
             setTimeout(() => {
                 if (onReveal) onReveal();
-                if (onOpen) onOpen(); // Por compatibilidad
+                if (onOpen) onOpen();
             }, 1800);
 
-            // Desmontar completamente cuando el sobre ya no es visible
             setTimeout(() => {
                 if (onComplete) onComplete();
             }, 4500);
-        }, 600); // 600ms en lugar de 1800ms para que responda rápido y se abran las puertas
+        }, 600);
     };
     const floralPattern = "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/fondos%20puertas.png')";
     const interiorPattern = "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/dcfd9c52-fb5b-4766-817a-24807c909752.png')";
@@ -332,7 +344,7 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
                 {/* SOLAPA IZQUIERDA */}
                 <div
                     className={`absolute top-0 bottom-0 left-0 w-[50%] md:w-[50%] origin-left z-20 transition-transform duration-[2500ms] ease-[cubic-bezier(0.25,1,0.5,1)] ${isOpen ? 'delay-[700ms]' : 'delay-0'}`}
-                    style={{ transform: isOpen ? 'rotateY(-140deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
+                    style={{ transform: isOpen ? 'rotateY(-140deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d', willChange: 'transform' }}
                 >
                     <div className="absolute inset-0 bg-[#f9f8f6] md:rounded-l-xl shadow-[5px_0_20px_rgba(0,0,0,0.06)] overflow-hidden border-r-[0.5px] border-[#e5d5c5]/80">
                         <div className="absolute top-0 bottom-0 left-0 bg-cover bg-no-repeat bg-center w-[200%]" style={{ backgroundImage: floralPattern }}></div>
@@ -342,7 +354,7 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
                 {/* SOLAPA DERECHA */}
                 <div
                     className={`absolute top-0 bottom-0 right-0 w-[51%] md:w-[51%] origin-right z-30 transition-transform duration-[2500ms] ease-[cubic-bezier(0.25,1,0.5,1)] delay-0`}
-                    style={{ transform: isOpen ? 'rotateY(140deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d' }}
+                    style={{ transform: isOpen ? 'rotateY(140deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d', willChange: 'transform' }}
                 >
                     <div className="absolute inset-0 bg-[#f9f8f6] md:rounded-r-xl border-l-[0.5px] border-[#e5d5c5]/80 shadow-[-5px_0_20px_rgba(0,0,0,0.06)] overflow-hidden">
                         <div className="absolute top-0 bottom-0 right-0 bg-cover bg-no-repeat bg-center w-[196.1%]" style={{ backgroundImage: floralPattern }}></div>
