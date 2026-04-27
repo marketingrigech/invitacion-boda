@@ -1,9 +1,32 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { isRsvpConfigured, supabase } from "../lib/supabaseClient"
 
-/** Lee el invitado desde la URL (?invitado=Nombre o ?n=...) para activar cada enlace por persona */
+/**
+ * Lee el nombre del invitado desde la URL.
+ *
+ * Prioridades:
+ *   1. Ruta del path:  /Matheo_Josue-Santacruz_Gomez
+ *      - "_" y "-" se convierten en espacio → "Matheo Josue Santacruz Gomez"
+ *   2. Query string legacy: ?invitado=Nombre o ?n=Nombre
+ *
+ * Formato del path:
+ *   - "_"  separa nombres dentro del mismo grupo (p.ej. segundo nombre, segundo apellido)
+ *   - "-"  separa el grupo de nombres del grupo de apellidos
+ *   Ambos simbolos se convierten en espacio para obtener el nombre completo.
+ */
 function getGuestStateFromUrl() {
   try {
+    // 1. Intentar leer desde el path  /Matheo_Josue-Santacruz_Gomez
+    const rawPath = decodeURIComponent(window.location.pathname)
+    const pathSegment = rawPath.replace(/^\//, "").split("/")[0]
+    if (pathSegment && pathSegment.length > 0) {
+      const nameFromPath = pathSegment.replace(/[_-]/g, " ").trim()
+      if (nameFromPath.length > 0) {
+        return { displayName: nameFromPath, prefillRsvpName: true }
+      }
+    }
+
+    // 2. Fallback: query string legacy  ?invitado=Nombre  o  ?n=Nombre
     const params = new URLSearchParams(window.location.search)
     const raw = params.get("invitado") ?? params.get("n") ?? ""
     const name = decodeURIComponent(raw.replace(/\+/g, " ")).trim()
