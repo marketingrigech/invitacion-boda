@@ -35,36 +35,66 @@ function IconoCalleLlegar({ className }) {
   )
 }
 
+/** Ornamento botánico estilo tinta — racimo que mira hacia el título; `flipped` espeja para el otro lado */
 const FloralOrnament = ({ className, flipped }) => (
-  <svg 
-    viewBox="0 0 100 40" 
-    className={`${className} ${flipped ? 'scale-x-[-1]' : ''}`}
+  <svg
+    viewBox="0 0 200 40"
+    className={`${className} ${flipped ? "scale-x-[-1]" : ""}`}
     fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
     xmlns="http://www.w3.org/2000/svg"
+    aria-hidden
   >
-    {/* Tallo principal curvo */}
-    <path d="M5,20 C30,10 70,30 95,20" />
-    
-    {/* Hojas superiores */}
-    <path d="M25,16 C28,10 35,12 35,16 C35,20 28,18 25,16 Z" fill="currentColor" opacity="0.4" />
-    <path d="M55,22 C58,16 65,18 65,22 C65,26 58,24 55,22 Z" fill="currentColor" opacity="0.4" />
-    <path d="M85,18 C88,12 95,14 95,18 C95,22 88,20 85,18 Z" fill="currentColor" opacity="0.4" />
-    
-    {/* Hojas inferiores */}
-    <path d="M15,22 C18,28 25,26 25,22 C25,18 18,20 15,22 Z" fill="currentColor" opacity="0.4" />
-    <path d="M45,18 C48,24 55,22 55,18 C55,14 48,16 45,18 Z" fill="currentColor" opacity="0.4" />
-    <path d="M75,24 C78,30 85,28 85,24 C85,20 78,22 75,24 Z" fill="currentColor" opacity="0.4" />
-    
-    {/* Pequeños brotes/puntos */}
-    <circle cx="20" cy="14" r="1" fill="currentColor" />
-    <circle cx="50" cy="26" r="1.5" fill="currentColor" />
-    <circle cx="80" cy="14" r="1" fill="currentColor" />
+    <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="0.6">
+      {/* Trazos curvos principales simétricos y muy sutiles */}
+      <path d="M 15 20 C 40 20 50 12 70 20 C 75 22 80 24 85 20" />
+      <path d="M 185 20 C 160 20 150 12 130 20 C 125 22 120 24 115 20" />
+
+      {/* Espirales decorativos inferiores (muy delicados) */}
+      <path d="M 70 20 C 60 28 55 20 62 16 C 64 15 67 16 67 18" />
+      <path d="M 130 20 C 140 28 145 20 138 16 C 136 15 133 16 133 18" />
+
+      {/* Espirales decorativos superiores (diminutos) */}
+      <path d="M 40 18 C 35 12 42 10 45 13" />
+      <path d="M 160 18 C 165 12 158 10 155 13" />
+
+      {/* Detalles sutiles de hojas/pétalos laterales */}
+      <path d="M 28 19 Q 32 15 35 18 Q 32 21 28 19 Z" fill="currentColor" fillOpacity="0.15" />
+      <path d="M 172 19 Q 168 15 165 18 Q 168 21 172 19 Z" fill="currentColor" fillOpacity="0.15" />
+      
+      <path d="M 52 17 Q 55 13 58 16 Q 55 19 52 17 Z" fill="currentColor" fillOpacity="0.15" />
+      <path d="M 148 17 Q 145 13 142 16 Q 145 19 148 17 Z" fill="currentColor" fillOpacity="0.15" />
+
+      {/* Pieza central (motivo floral/rombo) ultra fina */}
+      <g transform="translate(100, 20)">
+        {/* Tallo central que conecta ambos lados suavemente */}
+        <path d="M -15 0 C -10 -2 10 -2 15 0" />
+        
+        {/* Flor central estilizada de 3 pétalos o flor de lis simple */}
+        <path d="M 0 1 C -4 -5 -4 -12 0 -15 C 4 -12 4 -5 0 1 Z" />
+        <path d="M 0 0 C -8 -2 -12 -8 -8 -12 C -6 -10 -3 -5 0 -2" />
+        <path d="M 0 0 C 8 -2 12 -8 8 -12 C 6 -10 3 -5 0 -2" />
+        
+        {/* Adorno inferior central */}
+        <path d="M 0 1 C -3 5 0 8 0 8 C 0 8 3 5 0 1 Z" fill="currentColor" fillOpacity="0.2" />
+        <circle cx="0" cy="11" r="0.6" fill="currentColor" stroke="none" />
+      </g>
+
+      {/* Pequeños puntos a lo largo para dar aire principesco */}
+      <circle cx="45" cy="22" r="0.5" fill="currentColor" stroke="none" />
+      <circle cx="155" cy="22" r="0.5" fill="currentColor" stroke="none" />
+    </g>
   </svg>
 );
+
+/** Título de sección con el mismo filigrana que «Cómo nos conocimos» */
+function SectionTitleWithOrnament({ children, className = "" }) {
+  return (
+    <div className={`flex flex-col items-center justify-center mb-8 w-full px-2 ${className}`}>
+      <h2 className="text-3xl sm:text-4xl font-serif text-wine text-center mb-3">{children}</h2>
+      <FloralOrnament className="w-48 sm:w-60 h-auto text-wine/50 shrink-0 drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]" />
+    </div>
+  );
+}
 
 function FadeInSection({ children, className = "", delay = "0ms", observerRoot = null }) {
   const domRef = useRef()
@@ -333,11 +363,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* SECCIÓN NUESTRA HISTORIA 1: PRAGA */}
           <FadeInSection className="w-full mb-20" delay="300ms">
-            <div className="flex items-center justify-center gap-2 sm:gap-4 mb-6 w-full px-2">
-              <FloralOrnament className="w-12 sm:w-20 h-auto text-wine/60 shrink-0" flipped />
-              <h2 className="text-3xl sm:text-4xl font-serif text-wine text-center">Cómo nos conocimos</h2>
-              <FloralOrnament className="w-12 sm:w-20 h-auto text-wine/60 shrink-0" />
-            </div>
+            <SectionTitleWithOrnament>Cómo nos conocimos</SectionTitleWithOrnament>
             <div className="max-w-md mx-auto mb-10 px-4">
               <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Nuestras miradas se cruzaron por primera vez entre la magia de Praga y el aroma de su invierno.
@@ -358,7 +384,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* SECCIÓN NUESTRA HISTORIA 2: DISTANCIA */}
           <FadeInSection className="w-full mb-20" delay="300ms">
-            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">La distancia no fue barrera</h2>
+            <SectionTitleWithOrnament>La distancia no fue barrera</SectionTitleWithOrnament>
             <div className="max-w-md mx-auto mb-10 px-4">
               <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Nuestra historia continuaba: Ella en Madrid y Juanjo en Barcelona.
@@ -379,7 +405,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* SECCIÓN NUESTRA HISTORIA 3: EL SACRIFICIO */}
           <FadeInSection className="w-full mb-20" delay="300ms">
-            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Todo por amor</h2>
+            <SectionTitleWithOrnament>Todo por amor</SectionTitleWithOrnament>
             <div className="max-w-md mx-auto mb-10 px-4">
               <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Llegó el momento de tomar una de las decisiones más valientes. Juanjo lo dejó todo por amor,
@@ -400,7 +426,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* SECCIÓN NUESTRA HISTORIA 4: EL HOGAR */}
           <FadeInSection className="w-full mb-20" delay="300ms">
-            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Creamos un hogar</h2>
+            <SectionTitleWithOrnament>Creamos un hogar</SectionTitleWithOrnament>
             <div className="max-w-md mx-auto mb-10 px-4">
               <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Poco a poco, fuimos construyendo nuestro propio mundo, llenando cada rincón de sueños, risas y proyectos compartidos.
@@ -421,7 +447,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* SECCIÓN NUESTRA HISTORIA 5: TU PARTE */}
           <FadeInSection className="w-full mb-12" delay="300ms">
-            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Sé parte de nosotros</h2>
+            <SectionTitleWithOrnament>Sé parte de nosotros</SectionTitleWithOrnament>
             <div className="max-w-md mx-auto mb-10 px-4">
               <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Ahora queremos que tú seas parte de nuestra historia. Este capítulo final no estaría completo sin tu presencia en el día más importante de nuestras vidas.
@@ -441,7 +467,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* FECHA Y HORA */}
           <FadeInSection className="w-full mb-16 mt-8" delay="400ms">
-            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-10">Guárdate este día</h2>
+            <SectionTitleWithOrnament>Guárdate este día</SectionTitleWithOrnament>
 
             <div className="flex justify-center w-full px-8 mb-10">
               <img
@@ -484,7 +510,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* DÓNDE SERÁ */}
           <FadeInSection className="w-full mb-16" delay="500ms">
-            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">¿Dónde será?</h2>
+            <SectionTitleWithOrnament>¿Dónde será?</SectionTitleWithOrnament>
             <div className="flex flex-col items-center">
               <div className="mb-6 max-w-md px-2 text-center">
                 <p className="text-lg sm:text-xl text-wine-dark/85 font-serif italic mb-3">
@@ -530,7 +556,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* CÓDIGO DE VESTIMENTA */}
           <FadeInSection className="w-full mb-16" delay="500ms">
-            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Cómo ir vestido</h2>
+            <SectionTitleWithOrnament>Cómo ir vestido</SectionTitleWithOrnament>
 
             {/* Toggle */}
             <div className="flex justify-center mb-8">
@@ -573,7 +599,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
           {/* REGALO */}
           <FadeInSection className="w-full mb-16" delay="600ms">
             <div className="w-full border-y border-[#e5d5c5]/60 py-10 bg-[#e5d5c5]/10 px-6 rounded-sm">
-              <h2 className="text-2xl sm:text-3xl font-serif text-wine mb-4">Sobre el regalo</h2>
+              <SectionTitleWithOrnament>Sobre el regalo</SectionTitleWithOrnament>
               <p className="text-sm text-wine-dark/80 mb-6 font-serif italic max-w-sm mx-auto">
                 Vuestra presencia es el mejor regalo que podríamos pedir.
                 Sin embargo, si deseáis hacernos un detalle, os dejamos nuestro número de cuenta:
@@ -587,7 +613,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* RSVP FORM Y COUNTDOWN */}
           <FadeInSection className="w-full mb-16" delay="700ms">
-            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-2">Asistencia</h2>
+            <SectionTitleWithOrnament>Asistencia</SectionTitleWithOrnament>
             <p className="text-sm text-wine-dark/70 mb-4 font-serif italic px-4">Por favor, confirma tu asistencia para que podamos organizar los detalles.</p>
 
             {/* COUNTDOWN — mismo ancho que el contenido de la tarjeta (sin sangrar fuera del padding) */}
