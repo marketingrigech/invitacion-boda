@@ -490,7 +490,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* FECHA Y HORA */}
           <FadeInSection className="w-full mb-16 mt-8" delay="400ms">
-            <SectionTitleWithOrnament>Guárdate este día</SectionTitleWithOrnament>
+            <SectionTitleWithOrnament>{guestName !== "Invitado" ? `${guestName.split(" ")[0]}, guárdate este día` : "Guárdate este día"}</SectionTitleWithOrnament>
 
             <div className="flex justify-center w-full px-8 mb-10">
               <img
@@ -642,7 +642,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             {/* COUNTDOWN — mismo ancho que el contenido de la tarjeta (sin sangrar fuera del padding) */}
             <div className="mb-10 w-full rounded-sm border-y border-[#e5d5c5]/60 py-8 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
               <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-wine-dark/80 mb-5 font-medium px-2 sm:px-0 text-center">
-                Confirma antes del 10 de Mayo de 2026
+                {guestName !== "Invitado" ? `${guestName.split(" ")[0]}, confirma antes del 10 de Mayo de 2026` : "Confirma antes del 10 de Mayo de 2026"}
               </p>
               <div className="flex justify-center gap-2 sm:gap-6 font-serif px-2 sm:px-0">
                 <div className="flex flex-col items-center min-w-0">
@@ -750,7 +750,11 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
           {/* CIERRE EPICO */}
           <FadeInSection className="w-full pb-6" delay="800ms">
             <div className="w-16 h-[1px] bg-wine/30 mx-auto mb-10"></div>
-            <h2 className="text-6xl sm:text-7xl font-serif text-wine mb-6 mt-2 !leading-tight">Te esperamos</h2>
+            <h2 className="text-6xl sm:text-7xl font-serif text-wine mb-6 mt-2 !leading-tight">
+              {guestName !== "Invitado" ? (
+                <>{guestName.split(" ")[0]},<br /><span className="text-5xl sm:text-6xl">te esperamos</span></>
+              ) : "Te esperamos"}
+            </h2>
             <div className="flex justify-center mb-6">
               <svg className="w-8 h-8 text-wine/50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
             </div>
