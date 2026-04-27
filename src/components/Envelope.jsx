@@ -83,6 +83,9 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
         const ctx = canvas?.getContext('2d');
         if (!canvas || !ctx) return;
 
+        // Resetear el flag siempre al arrancar (necesario si React re-ejecuta el efecto)
+        isRunningRef.current = true;
+
         let animationFrameId;
 
         const resizeObserver = new ResizeObserver((entries) => {
