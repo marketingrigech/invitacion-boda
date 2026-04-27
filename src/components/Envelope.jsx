@@ -261,13 +261,12 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
 
         const state = stateRef.current;
         state.isCut = true;
-        // Cortar en el lado derecho (aprox 75%) para que se vea la animación cayendo
-        state.cutIndex = Math.floor(NUM_NODES * 0.75);
+        // Cortar exactamente en el centro (en el sello)
+        const centerIndex = Math.floor(NUM_NODES / 2);
+        state.cutIndex = centerIndex;
         state.flashTimer = 1.0;
 
-        // Liberar el nodo central para que la cuerda entera caiga y no se quede
-        // flotando en el medio del aire cuando el sello desaparece/baja.
-        const centerIndex = Math.floor(NUM_NODES / 2);
+        // Liberar el nodo central para que la cuerda se divida en dos mitades que caen hacia los lados
         if (state.nodes[centerIndex]) {
             state.nodes[centerIndex].isFixed = false;
         }
@@ -275,19 +274,19 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
         const leftNode = state.nodes[state.cutIndex];
         const rightNode = state.nodes[state.cutIndex + 1];
 
-        // Empuje inicial realista para que se separen
+        // Empuje inicial realista para que las dos partes salten hacia los bordes
         if (leftNode) {
-            leftNode.oldX += 10;
+            leftNode.oldX += 15;
             leftNode.oldY -= 5;
         }
         if (rightNode) {
-            rightNode.oldX -= 10;
+            rightNode.oldX -= 15;
             rightNode.oldY -= 5;
         }
 
-        // Fibras saltando
+        // Fibras saltando al romperse
         if (leftNode) {
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < 15; i++) {
                 state.particles.push(new Particle(leftNode.x, leftNode.y));
             }
         }
@@ -305,7 +304,7 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
             setTimeout(() => {
                 if (onComplete) onComplete();
             }, 4500);
-        }, 1800);
+        }, 600); // 600ms en lugar de 1800ms para que responda rápido y se abran las puertas
     };
     const floralPattern = "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/fondos%20puertas.png')";
     const interiorPattern = "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/dcfd9c52-fb5b-4766-817a-24807c909752.png')";
@@ -359,33 +358,27 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
                         ref={canvasRef}
                         className="absolute w-full h-full"
                     />
-
-                    {/* Área Interactiva de CORTE (Tijeras) posicionada en el lado derecho */}
-                    <div
-                        className={`absolute top-1/2 flex flex-col items-center justify-center cursor-pointer pointer-events-auto transition-all duration-300 z-50 group hover:-translate-y-1 ${isCut ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100 hover:scale-110 active:scale-90'}`}
-                        style={{ left: '75%', transform: 'translate(-50%, -50%)' }}
-                        onClick={handleCut}
-                    >
-                        {/* Marco pulsante de corte */}
-                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-dashed border-[#a0937d]/80 bg-white/40 backdrop-blur-sm flex items-center justify-center shadow-lg relative animate-pulse">
-                            <span className="text-xl md:text-2xl group-hover:-rotate-[30deg] group-active:-rotate-[60deg] transition-transform duration-200 relative top-[-1px]">✂️</span>
-                        </div>
-                        <div className="absolute top-14 md:top-16 text-[#857b68] text-[9px] md:text-[10px] font-sans font-bold tracking-[0.2em] uppercase text-center bg-white/90 px-3 py-1.5 rounded-sm shadow-sm opacity-80 group-hover:opacity-100 flex flex-col items-center leading-tight">
-                            <span>Pulsa aquí</span>
-                            <span>para cortar</span>
-                        </div>
-                    </div>
                 </div>
 
-                {/* Sello de cera DIVINO (Z-40: PISA LA CUERDA) */}
+                {/* Solo antes del corte: si usamos animate-pulse junto a opacity-0, el keyframe vuelve a subir la opacidad y parece que el mensaje "reaparece" */}
+                {!isCut && (
+                    <div
+                        className="absolute top-[50%] mt-20 left-1/2 z-50 -translate-x-1/2 pointer-events-none animate-pulse rounded-full bg-white/80 px-5 py-2 text-center text-[10px] font-bold uppercase tracking-[0.25em] text-[#857b68] shadow-sm backdrop-blur-sm md:text-[11px]"
+                    >
+                        Pulsa el sello para abrir
+                    </div>
+                )}
+
+                {/* Sello de cera DIVINO (ahora es el botón para abrir) */}
                 <div
-                    className={`absolute top-[50%] left-1/2 flex flex-col items-center justify-center z-40 pointer-events-none transition-all duration-[2200ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${isCut ? 'opacity-0 delay-100' : 'opacity-100 delay-0'}`}
+                    className={`absolute top-[50%] left-1/2 flex flex-col items-center justify-center z-40 pointer-events-auto cursor-pointer transition-all duration-[2200ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${isCut ? 'opacity-0 delay-100' : 'opacity-100 delay-0 hover:scale-105 active:scale-95'}`}
                     style={{ transform: isCut ? 'translate(-40%, 65vh) rotate(-20deg) scale(0.95)' : 'translate(-50%, -50%) rotate(0deg) scale(1)' }}
+                    onClick={handleCut}
                 >
                     <img
                         src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/ebc182e5-b02d-45ca-9652-1b8c9bfe09c6.png"
                         alt="Sello de cera"
-                        className="w-32 md:w-40 h-auto select-none"
+                        className="w-32 md:w-40 h-auto select-none transition-transform duration-300"
                         style={{ filter: 'drop-shadow(0px 10px 15px rgba(0,0,0,0.35))' }}
                         draggable={false}
                     />

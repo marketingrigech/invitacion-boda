@@ -4,7 +4,29 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  scroll-behavior: smooth;
+}
+
 body {
+  height: 100%;
+  margin: 0;
+}
+
+/* Cadena flex: el hijo .invitation-scene usa flex-1 + min-h-0 para poder hacer scroll interno con altura acotada */
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* El scroll vive solo en .invitation-scene; si no, el documento hace scroll y “arriba del todo” no coincide con el ref */
+body {
+  overflow: hidden;
   font-family: 'Montserrat', sans-serif;
   color: #471421;
   /* text-wine-dark */
@@ -22,10 +44,6 @@ h6 {
   font-weight: 400;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 .fade-in-section {
   opacity: 0;
   transform: translateY(20px);
@@ -40,6 +58,8 @@ html {
 
 .invitation-scene {
   isolation: isolate;
+  /* Evita que, al cargar imágenes arriba, el navegador reajuste el scroll y quede “a medias” la invitación */
+  overflow-anchor: none;
 }
 
 .paper-bg,

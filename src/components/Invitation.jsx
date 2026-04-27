@@ -1,22 +1,95 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { isRsvpConfigured, supabase } from "../lib/supabaseClient"
 
-function FadeInSection({ children, className = "", delay = "0ms" }) {
+/** Lee el invitado desde la URL (?invitado=Nombre o ?n=...) para activar cada enlace por persona */
+function getGuestStateFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const raw = params.get("invitado") ?? params.get("n") ?? ""
+    const name = decodeURIComponent(raw.replace(/\+/g, " ")).trim()
+    if (name.length > 0) return { displayName: name, prefillRsvpName: true }
+  } catch {
+    /* ignorar URL mal formada */
+  }
+  return { displayName: "Invitado", prefillRsvpName: false }
+}
+
+const VENUE_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4hmsB7UvMiubGZLWA"
+
+function IconoCalleLlegar({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 21C8 17.4 4 13.3 4 9a8 8 0 0116 0c0 4.3-4 8.4-8 12z" />
+      <circle cx="12" cy="9" r="2.25" />
+    </svg>
+  )
+}
+
+const FloralOrnament = ({ className, flipped }) => (
+  <svg 
+    viewBox="0 0 100 40" 
+    className={`${className} ${flipped ? 'scale-x-[-1]' : ''}`}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* Tallo principal curvo */}
+    <path d="M5,20 C30,10 70,30 95,20" />
+    
+    {/* Hojas superiores */}
+    <path d="M25,16 C28,10 35,12 35,16 C35,20 28,18 25,16 Z" fill="currentColor" opacity="0.4" />
+    <path d="M55,22 C58,16 65,18 65,22 C65,26 58,24 55,22 Z" fill="currentColor" opacity="0.4" />
+    <path d="M85,18 C88,12 95,14 95,18 C95,22 88,20 85,18 Z" fill="currentColor" opacity="0.4" />
+    
+    {/* Hojas inferiores */}
+    <path d="M15,22 C18,28 25,26 25,22 C25,18 18,20 15,22 Z" fill="currentColor" opacity="0.4" />
+    <path d="M45,18 C48,24 55,22 55,18 C55,14 48,16 45,18 Z" fill="currentColor" opacity="0.4" />
+    <path d="M75,24 C78,30 85,28 85,24 C85,20 78,22 75,24 Z" fill="currentColor" opacity="0.4" />
+    
+    {/* Pequeños brotes/puntos */}
+    <circle cx="20" cy="14" r="1" fill="currentColor" />
+    <circle cx="50" cy="26" r="1.5" fill="currentColor" />
+    <circle cx="80" cy="14" r="1" fill="currentColor" />
+  </svg>
+);
+
+function FadeInSection({ children, className = "", delay = "0ms", observerRoot = null }) {
   const domRef = useRef()
   useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible')
-        }
-      })
-    }, { threshold: 0.1, rootMargin: "0px 0px -20px 0px" })
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible")
+          }
+        })
+      },
+      {
+        root: observerRoot,
+        threshold: 0.08,
+        rootMargin: "0px 0px -12px 0px",
+      },
+    )
 
     const currentRef = domRef.current
     if (currentRef) observer.observe(currentRef)
     return () => {
       if (currentRef) observer.unobserve(currentRef)
     }
-  }, [])
+  }, [observerRoot])
 
   return (
     <div className={`fade-in-section ${className}`} ref={domRef} style={{ transitionDelay: delay }}>
@@ -25,13 +98,22 @@ function FadeInSection({ children, className = "", delay = "0ms" }) {
   )
 }
 
-function Invitation({ envelopeOpen }) {
-  const guestName = "Matheo Santacruz"; // Nombre de ejemplo
+function Invitation({ envelopeOpen, scrollContainerRef }) {
+  const [guestInfo] = useState(getGuestStateFromUrl)
+  const guestName = guestInfo.displayName
   const [showWelcomeBg, setShowWelcomeBg] = useState(false);
   const [showGuestName, setShowGuestName] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const [showCard, setShowCard] = useState(false);
   const [dressGender, setDressGender] = useState('Mujer');
+
+  const [rsvpName, setRsvpName] = useState(() =>
+    guestInfo.prefillRsvpName ? guestInfo.displayName : "",
+  )
+  const [rsvpEmail, setRsvpEmail] = useState("")
+  const [rsvpPlusOne, setRsvpPlusOne] = useState(false)
+  const [rsvpSubmitting, setRsvpSubmitting] = useState(false)
+  const [rsvpFeedback, setRsvpFeedback] = useState(null) // { type: 'ok' | 'err', text: string }
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
@@ -96,8 +178,75 @@ function Invitation({ envelopeOpen }) {
     }
   }, [envelopeOpen]);
 
+  const scrollContainerToTop = useCallback(() => {
+    const el = scrollContainerRef?.current
+    if (!el) return
+    el.scrollTop = 0
+    el.scrollLeft = 0
+  }, [scrollContainerRef])
+
+  const onHeroImageSettled = useCallback(() => {
+    scrollContainerToTop()
+    requestAnimationFrame(() => {
+      scrollContainerToTop()
+      requestAnimationFrame(scrollContainerToTop)
+    })
+  }, [scrollContainerToTop])
+
+  async function handleRsvpSubmit(e) {
+    e.preventDefault()
+    setRsvpFeedback(null)
+
+    if (!isRsvpConfigured() || !supabase) {
+      setRsvpFeedback({
+        type: "err",
+        text: "Falta la clave de API: crea un archivo .env con VITE_SUPABASE_ANON_KEY (y ejecuta el SQL de supabase/rsvp_setup.sql).",
+      })
+      return
+    }
+
+    const full_name = rsvpName.trim()
+    const email = rsvpEmail.trim().toLowerCase()
+    if (!full_name || !email) return
+
+    setRsvpSubmitting(true)
+    const { error } = await supabase.from("rsvp").insert({
+      full_name,
+      email,
+      plus_one: rsvpPlusOne,
+    })
+    setRsvpSubmitting(false)
+
+    if (error) {
+      setRsvpFeedback({
+        type: "err",
+        text:
+          error.message || "No se pudo enviar. Revisa la conexión o la configuración de Supabase.",
+      })
+      return
+    }
+
+    setRsvpFeedback({ type: "ok", text: "Confirmación recibida. ¡Gracias!" })
+    setRsvpName("")
+    setRsvpEmail("")
+    setRsvpPlusOne(false)
+  }
+
+  useLayoutEffect(() => {
+    if (!showCard) return
+    scrollContainerToTop()
+  }, [showCard, scrollContainerToTop])
+
+  useEffect(() => {
+    if (!showCard) return
+    const t = window.setTimeout(() => {
+      scrollContainerToTop()
+    }, 400)
+    return () => window.clearTimeout(t)
+  }, [showCard, scrollContainerToTop])
+
   return (
-    <div className="w-full min-h-screen py-10 flex items-center justify-center px-4 relative">
+    <div className="relative flex w-full min-h-0 flex-col items-center px-4 pb-12 pt-4">
 
       {/* FONDO DE BIENVENIDA (Aparece sólo durante la secuencia inicial) */}
       <div
@@ -145,30 +294,52 @@ function Invitation({ envelopeOpen }) {
         <div className="relative z-10 w-full flex flex-col items-center">
 
           <FadeInSection className="w-full mb-14" delay="200ms">
-            <div className="w-[calc(100%+48px)] sm:w-[calc(100%+96px)] -mx-6 sm:-mx-12 -mt-16 mb-4 overflow-hidden relative z-10 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border-b-[0.5px] border-[#e5d5c5]/60">
-              <img
-                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/NOS%20CASAMOS%20(1).png"
-                alt="Lis y Juanjo"
-                className="w-full h-auto max-h-[75vh] object-cover object-top transition-transform hover:scale-[1.03] duration-1000"
-              />
+            <div className="w-[calc(100%+48px)] sm:w-[calc(100%+96px)] -mx-6 sm:-mx-12 -mt-16 mb-6 overflow-hidden relative z-10 shadow-[0_12px_40px_rgba(62,42,42,0.12)] border-b-[0.5px] border-[#e5d5c5]/60">
+              {/* Foto principal + firma debajo (en flujo, no superpuesta) */}
+              <div className="relative bg-[#f8f5f1]">
+                {/* Marco fino, sin el bloque blanco grueso; abraza la imagen para no dejar franjas vacías */}
+                <div className="relative w-fit max-w-full mx-auto overflow-hidden rounded-[2px] border border-[#e3d5c7] bg-[#faf8f5] shadow-[0_4px_18px_rgba(62,42,42,0.08),inset_0_0_0_1px_rgba(255,255,255,0.4)]">
+                  <div className="relative w-full">
+                    <img
+                      src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/NOS%20CASAMOS.png"
+                      alt="Lis y Juanjo — Nos casamos"
+                      fetchPriority="high"
+                      decoding="async"
+                      onLoad={onHeroImageSettled}
+                      onError={onHeroImageSettled}
+                      className="mx-auto block h-auto w-full max-w-full max-h-[min(58svh,620px)] object-contain object-center transition-transform duration-[1000ms] ease-out motion-safe:hover:scale-[1.02]"
+                    />
+                    <div
+                      className="pointer-events-none absolute inset-0 z-[1] shadow-[inset_0_0_24px_rgba(71,20,33,0.04)]"
+                      aria-hidden
+                    />
+                  </div>
+                </div>
+                <div className="flex w-full justify-center px-4 pt-5 pb-1">
+                  <img
+                    src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/lis%20y%20juanjo.png"
+                    alt="Firma Lis y Juanjo"
+                    decoding="async"
+                    onLoad={onHeroImageSettled}
+                    onError={onHeroImageSettled}
+                    className="h-auto w-full max-w-[280px] select-none object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.08)] sm:max-w-[340px]"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="flex justify-center w-full mb-2 mt-2 px-4 relative z-20">
-              <img
-                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/lis%20y%20juanjo.png"
-                alt="Firma Lis y Juanjo"
-                className="w-full max-w-[320px] sm:max-w-[400px] h-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)] scale-125 transition-transform hover:scale-[1.3] duration-700"
-              />
-            </div>
-
-            <p className="text-sm sm:text-base text-wine-dark/70 italic font-serif mt-10">Acompáñanos a celebrar nuestro día</p>
+            <p className="text-xl sm:text-2xl text-black italic font-serif font-bold mt-8">Acompáñanos a celebrar nuestro día</p>
           </FadeInSection>
 
           {/* SECCIÓN NUESTRA HISTORIA 1: PRAGA */}
           <FadeInSection className="w-full mb-20" delay="300ms">
-            <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Cómo nos conocimos</h2>
-            <div className="max-w-md mx-auto mb-10">
-              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+            <div className="flex items-center justify-center gap-2 sm:gap-4 mb-6 w-full px-2">
+              <FloralOrnament className="w-12 sm:w-20 h-auto text-wine/60 shrink-0" flipped />
+              <h2 className="text-3xl sm:text-4xl font-serif text-wine text-center">Cómo nos conocimos</h2>
+              <FloralOrnament className="w-12 sm:w-20 h-auto text-wine/60 shrink-0" />
+            </div>
+            <div className="max-w-md mx-auto mb-10 px-4">
+              <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Nuestras miradas se cruzaron por primera vez entre la magia de Praga y el aroma de su invierno.
                 Aunque nuestras vidas parecían seguir rumbos distintos, aquel encuentro marcó el inicio de algo que ninguno de los dos pudo ignorar.
               </p>
@@ -176,8 +347,10 @@ function Invitation({ envelopeOpen }) {
 
             <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
               <img
-                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/0a8969cf-b428-49bf-bef4-f9b7db8d2b66.png"
+                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/6690c395-e6e4-48b8-8c25-492c9ac597cf.png"
                 alt="Nuestra historia"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto object-cover"
               />
             </div>
@@ -187,7 +360,7 @@ function Invitation({ envelopeOpen }) {
           <FadeInSection className="w-full mb-20" delay="300ms">
             <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">La distancia no fue barrera</h2>
             <div className="max-w-md mx-auto mb-10 px-4">
-              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+              <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Nuestra historia continuaba: Ella en Madrid y Juanjo en Barcelona.
                 Cientos de kilómetros, infinitas llamadas y billetes de tren que acortaban la espera entre dos corazones que ya no sabían estar separados.
               </p>
@@ -197,6 +370,8 @@ function Invitation({ envelopeOpen }) {
               <img
                 src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/8cadf582-8daa-4353-b237-2b4e7759596a.png"
                 alt="La distancia"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto object-cover"
               />
             </div>
@@ -206,7 +381,7 @@ function Invitation({ envelopeOpen }) {
           <FadeInSection className="w-full mb-20" delay="300ms">
             <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Todo por amor</h2>
             <div className="max-w-md mx-auto mb-10 px-4">
-              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+              <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Llegó el momento de tomar una de las decisiones más valientes. Juanjo lo dejó todo por amor,
                 cerrando una etapa en Barcelona para apostar por un futuro juntos, demostrando que cuando el sentimiento es real, el hogar está donde esté la otra persona.
               </p>
@@ -216,6 +391,8 @@ function Invitation({ envelopeOpen }) {
               <img
                 src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/63a2cf6c-5515-4343-b505-8f00be458419.png"
                 alt="Sacrificio por amor"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto object-cover"
               />
             </div>
@@ -225,7 +402,7 @@ function Invitation({ envelopeOpen }) {
           <FadeInSection className="w-full mb-20" delay="300ms">
             <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Creamos un hogar</h2>
             <div className="max-w-md mx-auto mb-10 px-4">
-              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+              <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Poco a poco, fuimos construyendo nuestro propio mundo, llenando cada rincón de sueños, risas y proyectos compartidos.
                 Hoy, nuestro hogar es el refugio donde celebramos la vida cada día.
               </p>
@@ -235,6 +412,8 @@ function Invitation({ envelopeOpen }) {
               <img
                 src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/72f6c064-bed0-458c-90d4-dfa0e525aca0.png"
                 alt="Nuestro hogar"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto object-cover"
               />
             </div>
@@ -244,7 +423,7 @@ function Invitation({ envelopeOpen }) {
           <FadeInSection className="w-full mb-12" delay="300ms">
             <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">Sé parte de nosotros</h2>
             <div className="max-w-md mx-auto mb-10 px-4">
-              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+              <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Ahora queremos que tú seas parte de nuestra historia. Este capítulo final no estaría completo sin tu presencia en el día más importante de nuestras vidas.
               </p>
             </div>
@@ -253,6 +432,8 @@ function Invitation({ envelopeOpen }) {
               <img
                 src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/d9b6e4aa-df92-467e-8f3f-a62bd5652f6d.png"
                 alt="Sé parte de nuestra historia"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto object-cover"
               />
             </div>
@@ -266,19 +447,36 @@ function Invitation({ envelopeOpen }) {
               <img
                 src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/FECHA.png"
                 alt="Calendario"
+                loading="lazy"
+                decoding="async"
                 className="w-full max-w-[280px] sm:max-w-[320px] opacity-90 scale-110 mix-blend-multiply"
               />
             </div>
 
             <div className="flex flex-col items-center mt-6 w-full px-4">
-              <div className="relative overflow-hidden bg-[#faf8f5] border-[0.5px] border-[#e5d5c5]/80 shadow-[0_4px_15px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.03)] rounded-sm py-8 px-6 sm:px-12 w-full max-w-sm flex flex-col items-center mx-auto">
+              <div className="relative overflow-hidden bg-[#faf8f5] border-[0.5px] border-[#e5d5c5]/80 shadow-[0_4px_15px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.03)] rounded-sm py-6 px-4 sm:py-8 sm:px-12 w-full max-w-sm flex flex-col items-center mx-auto">
                 {/* Textura de papel para el cuadro */}
                 <div className="absolute inset-0 opacity-40 pointer-events-none mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cream-paper.png")' }}></div>
 
-                <div className="relative z-10 flex flex-col items-center w-full">
-                  <p className="text-3xl sm:text-4xl md:text-5xl font-sans font-light text-wine mb-2 tracking-[0.15em] sm:tracking-[0.2em] whitespace-nowrap">19 - 09 - 2026</p>
-                  <div className="w-16 h-[1px] bg-wine/30 mx-auto my-3"></div>
-                  <p className="text-lg sm:text-xl uppercase tracking-widest text-wine-dark/80 font-medium text-center">A las 17:00 hrs</p>
+                <div className="relative z-10 flex flex-col items-center w-full min-w-0">
+                  <div
+                    className="flex flex-col items-center gap-1 sm:gap-1.5 font-sans font-light text-wine tabular-nums"
+                    aria-label="19 de septiembre de 2026"
+                  >
+                    <span className="text-3xl leading-none tracking-[0.08em] sm:text-4xl md:text-5xl">19</span>
+                    <span className="text-lg leading-none text-wine/45 select-none sm:text-xl" aria-hidden>
+                      −
+                    </span>
+                    <span className="text-3xl leading-none tracking-[0.08em] sm:text-4xl md:text-5xl">09</span>
+                    <span className="text-lg leading-none text-wine/45 select-none sm:text-xl" aria-hidden>
+                      −
+                    </span>
+                    <span className="text-3xl leading-none tracking-[0.08em] sm:text-4xl md:text-5xl">26</span>
+                  </div>
+                  <div className="w-12 sm:w-16 h-px bg-wine/25 mx-auto my-4 sm:my-5" />
+                  <p className="font-sans text-base sm:text-lg md:text-xl text-wine-dark/85 font-normal tracking-[0.12em] text-center">
+                    a las 17:00
+                  </p>
                 </div>
               </div>
             </div>
@@ -288,24 +486,44 @@ function Invitation({ envelopeOpen }) {
           <FadeInSection className="w-full mb-16" delay="500ms">
             <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-6">¿Dónde será?</h2>
             <div className="flex flex-col items-center">
-              <p className="text-lg sm:text-xl text-wine-dark/80 font-serif italic mb-6 text-center max-w-sm">
-                Calle travesía del oxígeno 1
-              </p>
+              <div className="mb-6 max-w-md px-2 text-center">
+                <p className="text-lg sm:text-xl text-wine-dark/85 font-serif italic mb-3">
+                  La Casa Rural Spa La Batipuerta
+                </p>
+                <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
+                  Calle Los Cantos, nº 2 (o nº 8 según contacto)
+                  <br />
+                  <span className="mt-2 inline-block">
+                    Candelario, Salamanca · 37710
+                  </span>
+                </p>
+                <button
+                  type="button"
+                  className="mt-5 inline-flex items-center justify-center gap-2 rounded-sm px-4 py-2 text-sm font-medium tracking-wide text-[#8f7a65] underline-offset-4 transition-colors hover:text-[#6d5c4d] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/40 focus-visible:ring-offset-2"
+                  onClick={() => window.open(VENUE_GOOGLE_MAPS_URL, "_blank")}
+                >
+                  <IconoCalleLlegar className="h-6 w-6 shrink-0 text-[#8f7a65]" />
+                  <span>Cómo llegar</span>
+                </button>
+              </div>
 
               <div className="w-[calc(100%+24px)] md:w-full max-w-md -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5 mb-8">
                 <img
-                  src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/Captura%20de%20pantalla%202026-03-01%20165221.png"
-                  alt="Mapa de ubicación"
+                  src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/casa%20rural.jpg"
+                  alt="La Casa Rural Spa La Batipuerta — Candelario, Salamanca"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-auto object-cover cursor-pointer hover:opacity-95 transition-opacity duration-300"
-                  onClick={() => window.open("https://maps.google.com/?q=Calle+travesia+del+oxigeno+1", "_blank")}
+                  onClick={() => window.open(VENUE_GOOGLE_MAPS_URL, "_blank")}
                 />
               </div>
 
               <button
+                type="button"
                 className="bg-wine text-cream px-8 py-3 rounded-sm text-xs sm:text-sm uppercase tracking-widest hover:bg-wine-dark hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-                onClick={() => window.open("https://maps.google.com/?q=Calle+travesia+del+oxigeno+1", "_blank")}
+                onClick={() => window.open(VENUE_GOOGLE_MAPS_URL, "_blank")}
               >
-                Ver en Mapa
+                Ver cómo llegar
               </button>
             </div>
           </FadeInSection>
@@ -337,15 +555,15 @@ function Invitation({ envelopeOpen }) {
               <div className="flex w-full gap-4 overflow-x-auto snap-x snap-mandatory pb-6 px-4 -mx-4 hide-scrollbar justify-start md:justify-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {dressGender === 'Mujer' ? (
                   <>
-                    <img src="https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 1" />
-                    <img src="https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 2" />
-                    <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 3" />
+                    <img src="https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 1" loading="lazy" decoding="async" />
+                    <img src="https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 2" loading="lazy" decoding="async" />
+                    <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 3" loading="lazy" decoding="async" />
                   </>
                 ) : (
                   <>
-                    <img src="https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 1" />
-                    <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 2" />
-                    <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 3" />
+                    <img src="https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 1" loading="lazy" decoding="async" />
+                    <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 2" loading="lazy" decoding="async" />
+                    <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 3" loading="lazy" decoding="async" />
                   </>
                 )}
               </div>
@@ -372,37 +590,51 @@ function Invitation({ envelopeOpen }) {
             <h2 className="text-3xl sm:text-4xl font-serif text-wine mb-2">Asistencia</h2>
             <p className="text-sm text-wine-dark/70 mb-4 font-serif italic px-4">Por favor, confirma tu asistencia para que podamos organizar los detalles.</p>
 
-            {/* COUNTDOWN */}
-            <div className="mb-10 w-[calc(100%+48px)] sm:w-[calc(100%+96px)] -mx-6 sm:-mx-12 border-y border-[#e5d5c5]/60 py-8 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
-              <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-wine-dark/80 mb-5 font-medium px-4">Confirma antes del 10 de Mayo de 2026</p>
-              <div className="flex justify-center gap-3 sm:gap-6 font-serif px-4">
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl sm:text-4xl text-wine">{timeLeft.dias || '0'}</span>
+            {/* COUNTDOWN — mismo ancho que el contenido de la tarjeta (sin sangrar fuera del padding) */}
+            <div className="mb-10 w-full rounded-sm border-y border-[#e5d5c5]/60 py-8 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
+              <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-wine-dark/80 mb-5 font-medium px-2 sm:px-0 text-center">
+                Confirma antes del 10 de Mayo de 2026
+              </p>
+              <div className="flex justify-center gap-2 sm:gap-6 font-serif px-2 sm:px-0">
+                <div className="flex flex-col items-center min-w-0">
+                  <span className="text-2xl sm:text-4xl tabular-nums text-wine">{timeLeft.dias || '0'}</span>
                   <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Días</span>
                 </div>
-                <span className="text-2xl sm:text-4xl text-wine/30 mt-1">:</span>
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl sm:text-4xl text-wine">{timeLeft.horas || '0'}</span>
+                <span className="text-xl sm:text-4xl text-wine/30 mt-1 shrink-0">:</span>
+                <div className="flex flex-col items-center min-w-0">
+                  <span className="text-2xl sm:text-4xl tabular-nums text-wine">{timeLeft.horas || '0'}</span>
                   <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Hrs</span>
                 </div>
-                <span className="text-2xl sm:text-4xl text-wine/30 mt-1">:</span>
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl sm:text-4xl text-wine">{timeLeft.minutos || '0'}</span>
+                <span className="text-xl sm:text-4xl text-wine/30 mt-1 shrink-0">:</span>
+                <div className="flex flex-col items-center min-w-0">
+                  <span className="text-2xl sm:text-4xl tabular-nums text-wine">{timeLeft.minutos || '0'}</span>
                   <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Min</span>
                 </div>
-                <span className="text-2xl sm:text-4xl text-wine/30 mt-1">:</span>
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl sm:text-4xl text-wine">{timeLeft.segundos || '0'}</span>
+                <span className="text-xl sm:text-4xl text-wine/30 mt-1 shrink-0">:</span>
+                <div className="flex flex-col items-center min-w-0">
+                  <span className="text-2xl sm:text-4xl tabular-nums text-wine">{timeLeft.segundos || '0'}</span>
                   <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Seg</span>
                 </div>
               </div>
             </div>
 
-            <form className="w-full max-w-sm mx-auto flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
+            <form
+              className="w-full max-w-sm mx-auto flex flex-col gap-6"
+              onSubmit={handleRsvpSubmit}
+            >
               <div className="flex flex-col text-left">
-                <label className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium">Nombre completo</label>
+                <label
+                  className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium"
+                  htmlFor="rsvp-name"
+                >
+                  Nombre completo
+                </label>
                 <input
+                  id="rsvp-name"
                   type="text"
+                  value={rsvpName}
+                  onChange={e => setRsvpName(e.target.value)}
+                  autoComplete="name"
                   className="w-full border-b-[1.5px] border-wine/30 bg-transparent py-2 px-1 text-wine-dark focus:outline-none focus:border-wine transition-colors placeholder:text-wine/30 font-serif italic"
                   placeholder="Escribe tu nombre y apellidos"
                   required
@@ -410,9 +642,18 @@ function Invitation({ envelopeOpen }) {
               </div>
 
               <div className="flex flex-col text-left">
-                <label className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium">Correo electrónico</label>
+                <label
+                  className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium"
+                  htmlFor="rsvp-email"
+                >
+                  Correo electrónico
+                </label>
                 <input
+                  id="rsvp-email"
                   type="email"
+                  value={rsvpEmail}
+                  onChange={e => setRsvpEmail(e.target.value)}
+                  autoComplete="email"
                   className="w-full border-b-[1.5px] border-wine/30 bg-transparent py-2 px-1 text-wine-dark focus:outline-none focus:border-wine transition-colors placeholder:text-wine/30 font-serif italic"
                   placeholder="tu@correo.com"
                   required
@@ -423,6 +664,8 @@ function Invitation({ envelopeOpen }) {
                 <div className="relative flex items-center justify-center w-5 h-5">
                   <input
                     type="checkbox"
+                    checked={rsvpPlusOne}
+                    onChange={e => setRsvpPlusOne(e.target.checked)}
                     className="peer appearance-none w-5 h-5 border-[1.5px] border-wine/40 rounded-[2px] checked:bg-wine checked:border-wine cursor-pointer transition-all focus:outline-none"
                   />
                   <div className="absolute text-cream pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">
@@ -434,11 +677,23 @@ function Invitation({ envelopeOpen }) {
                 </span>
               </label>
 
+              {rsvpFeedback && (
+                <p
+                  className={`text-sm font-serif italic text-center ${
+                    rsvpFeedback.type === "ok" ? "text-wine" : "text-red-800/90"
+                  }`}
+                  role="status"
+                >
+                  {rsvpFeedback.text}
+                </p>
+              )}
+
               <button
                 type="submit"
-                className="mt-6 w-full bg-transparent border border-wine text-wine px-10 py-3.5 rounded-sm text-sm uppercase tracking-widest hover:bg-wine hover:text-cream transition-all duration-300"
+                disabled={rsvpSubmitting}
+                className="mt-2 w-full bg-transparent border border-wine text-wine px-10 py-3.5 rounded-sm text-sm uppercase tracking-widest hover:bg-wine hover:text-cream transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none"
               >
-                Confirmar Asistencia
+                {rsvpSubmitting ? "Enviando…" : "Confirmar Asistencia"}
               </button>
             </form>
           </FadeInSection>
