@@ -2,27 +2,31 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { isRsvpConfigured, supabase } from "../lib/supabaseClient"
 
 /**
- * Lee el nombre del invitado desde la URL.
+ * Lee el nombre del invitado y si viene con acompañante desde la URL.
  *
- * Prioridades:
- *   1. Ruta del path:  /Matheo_Josue-Santacruz_Gomez
- *      - "_" y "-" se convierten en espacio → "Matheo Josue Santacruz Gomez"
- *   2. Query string legacy: ?invitado=Nombre o ?n=Nombre
+ * Formatos soportados:
+ *   /Lourdes-Sibañа          → nombre, sin acompañante
+ *   /Lourdes-Sibañа+1        → nombre, con acompañante pre-marcado
+ *   /Matheo_Josue-Santacruz_Gomez+1  → nombre completo, con acompañante
  *
- * Formato del path:
- *   - "_"  separa nombres dentro del mismo grupo (p.ej. segundo nombre, segundo apellido)
- *   - "-"  separa el grupo de nombres del grupo de apellidos
- *   Ambos simbolos se convierten en espacio para obtener el nombre completo.
+ * Reglas del path:
+ *   - "_"  espacio dentro del mismo grupo (segundo nombre / segundo apellido)
+ *   - "-"  espacio entre grupo de nombres y grupo de apellidos
+ *   - "+1" al final → acompañante pre-marcado (se elimina del nombre)
+ *
+ * Fallback legacy: ?invitado=Nombre o ?n=Nombre
  */
 function getGuestStateFromUrl() {
   try {
-    // 1. Intentar leer desde el path  /Matheo_Josue-Santacruz_Gomez
+    // 1. Intentar leer desde el path
     const rawPath = decodeURIComponent(window.location.pathname)
-    const pathSegment = rawPath.replace(/^\//, "").split("/")[0]
+    let pathSegment = rawPath.replace(/^\//, "").split("/")[0]
     if (pathSegment && pathSegment.length > 0) {
+      const plusOne = pathSegment.endsWith("+1")
+      if (plusOne) pathSegment = pathSegment.slice(0, -2) // quitar "+1"
       const nameFromPath = pathSegment.replace(/[_-]/g, " ").trim()
       if (nameFromPath.length > 0) {
-        return { displayName: nameFromPath, prefillRsvpName: true }
+        return { displayName: nameFromPath, prefillRsvpName: true, plusOne }
       }
     }
 
@@ -30,11 +34,11 @@ function getGuestStateFromUrl() {
     const params = new URLSearchParams(window.location.search)
     const raw = params.get("invitado") ?? params.get("n") ?? ""
     const name = decodeURIComponent(raw.replace(/\+/g, " ")).trim()
-    if (name.length > 0) return { displayName: name, prefillRsvpName: true }
+    if (name.length > 0) return { displayName: name, prefillRsvpName: true, plusOne: false }
   } catch {
     /* ignorar URL mal formada */
   }
-  return { displayName: "Invitado", prefillRsvpName: false }
+  return { displayName: "Invitado", prefillRsvpName: false, plusOne: false }
 }
 
 const VENUE_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4hmsB7UvMiubGZLWA"
@@ -164,7 +168,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
     guestInfo.prefillRsvpName ? guestInfo.displayName : "",
   )
   const [rsvpEmail, setRsvpEmail] = useState("")
-  const [rsvpPlusOne, setRsvpPlusOne] = useState(false)
+  const [rsvpPlusOne, setRsvpPlusOne] = useState(() => guestInfo.plusOne ?? false)
   const [rsvpSubmitting, setRsvpSubmitting] = useState(false)
   const [rsvpFeedback, setRsvpFeedback] = useState(null) // { type: 'ok' | 'err', text: string }
 
