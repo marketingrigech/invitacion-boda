@@ -44,6 +44,9 @@ function getGuestStateFromUrl() {
 
 const VENUE_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4hmsB7UvMiubGZLWA"
 
+/** Sube el número cuando sustituyas `public/boda/fecha.png` para forzar recarga (caché CDN/navegador). */
+const FECHA_CALENDARIO_SRC = `/boda/fecha.png?v=3`
+
 /** Fotos de la finca (carpeta public/boda/Finca). Orden: 12.14.32 → 12.14.33 (1)…(11). */
 const FINCA_IMAGE_FILENAMES = [
   "WhatsApp Image 2026-05-05 at 12.14.32.jpeg",
@@ -852,11 +855,11 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             {/* Calendario: bleed + zoom ligero para comer márgenes del PNG y llenar el ancho */}
             <div className="w-[calc(100%+48px)] sm:w-[calc(100%+96px)] max-w-none -mx-6 sm:-mx-12 mb-10 overflow-hidden">
               <img
-                src="/boda/fecha.png"
+                src={FECHA_CALENDARIO_SRC}
                 alt="Calendario"
                 loading="lazy"
                 decoding="async"
-                className="relative left-1/2 block h-auto w-[124%] max-w-none -translate-x-1/2 opacity-90 mix-blend-multiply sm:w-[118%]"
+                className="relative left-1/2 block h-auto w-[124%] max-w-none -translate-x-1/2 sm:w-[118%]"
               />
             </div>
 
