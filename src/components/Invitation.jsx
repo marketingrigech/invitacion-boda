@@ -931,6 +931,9 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
           <FadeInSection className="w-full mb-16" delay="700ms">
             {/* Cuenta atrás + recordatorio calendario */}
             <div className="mb-8 w-full rounded-sm border-y border-[#e5d5c5]/60 py-6 sm:py-7 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
+              <p className="text-2xl sm:text-3xl md:text-4xl text-wine-dark mb-2 font-bold px-3 sm:px-4 text-center leading-tight font-serif">
+                Confirma tu asistencia
+              </p>
               <p className="text-lg sm:text-xl md:text-2xl text-wine-dark mb-5 font-bold px-3 sm:px-4 text-center font-serif tracking-wide">
                 25 de junio de 2026
               </p>
