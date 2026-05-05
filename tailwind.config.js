@@ -26,7 +26,7 @@ export default {
         "fade-out-overlay": "fade-out-overlay 1.2s ease-out forwards",
       },
       backgroundImage: {
-        'grape-pattern': "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/uvas.png')"
+        'grape-pattern': "url('/boda/uvas.png')"
       }
     },
   },

@@ -321,8 +321,8 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
             }, 4500);
         }, 600);
     };
-    const floralPattern = "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/fondos%20puertas.png')";
-    const interiorPattern = "url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/dcfd9c52-fb5b-4766-817a-24807c909752.png')";
+    const floralPattern = "url('/boda/fondos-puertas.png')";
+    const interiorPattern = "url('/boda/sobre-interior.png')";
 
     return (
         <div className={`fixed inset-0 z-50 overflow-hidden flex items-center justify-center transition-all duration-[2000ms] ${isOpen ? 'pointer-events-none opacity-0 delay-[2500ms]' : 'opacity-100 delay-0'}`}>
@@ -391,7 +391,7 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
                     onClick={handleCut}
                 >
                     <img
-                        src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/ebc182e5-b02d-45ca-9652-1b8c9bfe09c6.png"
+                        src="/boda/sello.png"
                         alt="Sello de cera"
                         className="w-32 md:w-40 h-auto select-none transition-transform duration-300"
                         style={{ filter: 'drop-shadow(0px 10px 15px rgba(0,0,0,0.35))' }}

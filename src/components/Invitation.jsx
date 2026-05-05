@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { isRsvpConfigured, supabase } from "../lib/supabaseClient"
+import confetti from "canvas-confetti"
 
 /**
  * Lee el nombre del invitado y si viene con acompañante desde la URL.
@@ -162,7 +163,44 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
   const [showGuestName, setShowGuestName] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const [showCard, setShowCard] = useState(false);
-  const [dressGender, setDressGender] = useState('Mujer');
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  useEffect(() => {
+    if (showConfetti) {
+      const duration = 2000; // Reducido a 2 segundos
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        const goldColors = ['#D4AF37', '#FFDF00', '#DAA520', '#B8860B', '#F3E5AB'];
+        
+        confetti({
+          particleCount: 8,
+          angle: 60,
+          spread: 80,
+          origin: { x: -0.1, y: 0.85 },
+          startVelocity: 65,
+          colors: goldColors,
+          ticks: 200,
+          zIndex: 100
+        });
+        confetti({
+          particleCount: 8,
+          angle: 120,
+          spread: 80,
+          origin: { x: 1.1, y: 0.85 },
+          startVelocity: 65,
+          colors: goldColors,
+          ticks: 200,
+          zIndex: 100
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+  }, [showConfetti]);
 
   const [rsvpName, setRsvpName] = useState(() =>
     guestInfo.prefillRsvpName ? guestInfo.displayName : "",
@@ -175,8 +213,8 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   function calculateTimeLeft() {
-    // 10 de mayo de 2026 a las 23:59:59
-    const targetDate = new Date("2026-05-10T23:59:59").getTime();
+    // Fecha límite para el RSVP o para la boda: Abril de 2026. Usamos 1 de abril.
+    const targetDate = new Date("2026-04-01T23:59:59").getTime();
     const now = new Date().getTime();
     const difference = targetDate - now;
 
@@ -222,6 +260,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
       const timerCard = setTimeout(() => {
         setShowWelcomeBg(false);
         setShowCard(true);
+        setShowConfetti(true);
       }, 6800);
 
       return () => {
@@ -310,7 +349,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
         className={`fixed inset-0 z-0 bg-cover bg-center transition-opacity duration-[2000ms] ease-in-out pointer-events-none
           ${showWelcomeBg ? 'opacity-100' : 'opacity-0'}
         `}
-        style={{ backgroundImage: `url('https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/fondo%20nombre%20y%20bienveida%20(1).png')` }}
+        style={{ backgroundImage: `url('/boda/fondo-nombre-bienvenida.png')` }}
       ></div>
 
       {/* NOMBRE DEL INVITADO EN TODA LA PÁGINA */}
@@ -341,7 +380,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
       <div className={`relative z-20 w-full max-w-lg bg-[#fbfaf9] shadow-[0_10px_40px_rgba(0,0,0,0.15)] rounded-sm overflow-hidden flex flex-col items-center pt-16 pb-20 px-6 sm:px-12 text-center transition-all duration-[2000ms] ease-[cubic-bezier(0.25,1,0.5,1)] ${showCard ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95 pointer-events-none'}`}>
 
         {/* Textura de ruido suave (efecto papel crema) */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cream-paper.png")' }}></div>
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style={{ backgroundImage: 'url("/boda/cream-paper.png")' }}></div>
 
         {/* Borde interior elegante */}
         <div className="absolute inset-3 sm:inset-4 border-[1px] border-[#e5d5c5]/80 pointer-events-none rounded-sm"></div>
@@ -358,7 +397,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 <div className="relative w-fit max-w-full mx-auto overflow-hidden rounded-[2px] border border-[#e3d5c7] bg-[#faf8f5] shadow-[0_4px_18px_rgba(62,42,42,0.08),inset_0_0_0_1px_rgba(255,255,255,0.4)]">
                   <div className="relative w-full">
                     <img
-                      src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/NOS%20CASAMOS.png"
+                      src="/boda/nos-casamos.png"
                       alt="Lis y Juanjo — Nos casamos"
                       fetchPriority="high"
                       decoding="async"
@@ -374,7 +413,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 </div>
                 <div className="flex w-full justify-center px-4 pt-5 pb-1">
                   <img
-                    src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/lis%20y%20juanjo.png"
+                    src="/boda/lis-y-juanjo.png"
                     alt="Firma Lis y Juanjo"
                     decoding="async"
                     onLoad={onHeroImageSettled}
@@ -388,20 +427,25 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             <p className="text-xl sm:text-2xl text-black italic font-serif font-bold mt-8">Acompáñanos a celebrar nuestro día</p>
           </FadeInSection>
 
-          {/* SECCIÓN NUESTRA HISTORIA 1: PRAGA */}
+          {/* SECCIÓN NUESTRA HISTORIA 1: CÓMO NOS CONOCIMOS */}
           <FadeInSection className="w-full mb-20" delay="300ms">
             <SectionTitleWithOrnament>Cómo nos conocimos</SectionTitleWithOrnament>
             <div className="max-w-md mx-auto mb-10 px-4">
               <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
-                Nuestras miradas se cruzaron por primera vez entre la magia de Praga y el aroma de su invierno.
-                Aunque nuestras vidas parecían seguir rumbos distintos, aquel encuentro marcó el inicio de algo que ninguno de los dos pudo ignorar.
+                Nos conocimos en una boda.
+                <br /><br />
+                Y aquella noche, sin sospecharlo, el amor empezó a escribir nuestra historia.
+                <br /><br />
+                Entre todas las personas.<br />
+                Entre todas las conversaciones.<br />
+                Nos elegimos.
               </p>
             </div>
 
             <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
               <img
-                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/6690c395-e6e4-48b8-8c25-492c9ac597cf.png"
-                alt="Nuestra historia"
+                src="/boda/historia-praga.png"
+                alt="Cómo nos conocimos"
                 loading="lazy"
                 decoding="async"
                 className="w-full h-auto object-cover"
@@ -409,19 +453,50 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             </div>
           </FadeInSection>
 
-          {/* SECCIÓN NUESTRA HISTORIA 2: DISTANCIA */}
+          {/* SECCIÓN NUESTRA HISTORIA 2: ESA CERTEZA TRANQUILA */}
           <FadeInSection className="w-full mb-20" delay="300ms">
-            <SectionTitleWithOrnament>La distancia no fue barrera</SectionTitleWithOrnament>
+            <SectionTitleWithOrnament>Esa certeza tranquila</SectionTitleWithOrnament>
             <div className="max-w-md mx-auto mb-10 px-4">
               <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
-                Nuestra historia continuaba: Ella en Madrid y Juanjo en Barcelona.
-                Cientos de kilómetros, infinitas llamadas y billetes de tren que acortaban la espera entre dos corazones que ya no sabían estar separados.
+                No fue casualidad.
+                <br /><br />
+                Fue esa certeza tranquila que aparece sin hacer ruido y susurra:
+                <br />
+                “Aquí es”.
+                <br /><br />
+                Desde el primer instante todo fue fácil.<br />
+                Natural.<br />
+                Como si, de alguna manera, lleváramos toda la vida esperando este momento.
               </p>
             </div>
 
             <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
               <img
-                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/8cadf582-8daa-4353-b237-2b4e7759596a.png"
+                src="/boda/historia-sacrificio.png"
+                alt="Esa certeza tranquila"
+                loading="lazy"
+                decoding="async"
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          </FadeInSection>
+
+          {/* SECCIÓN NUESTRA HISTORIA 3: DISTANCIA */}
+          <FadeInSection className="w-full mb-20" delay="300ms">
+            <SectionTitleWithOrnament>La distancia no fue barrera</SectionTitleWithOrnament>
+            <div className="max-w-md mx-auto mb-10 px-4">
+              <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
+                Él en Barcelona.<br />
+                Ella en Madrid.
+                <br /><br />
+                Pero cuando dos personas deciden caminar en la misma dirección,
+                las distancias dejan de ser obstáculos y se transforman en ilusión.
+              </p>
+            </div>
+
+            <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
+              <img
+                src="/boda/historia-distancia.png"
                 alt="La distancia"
                 loading="lazy"
                 decoding="async"
@@ -430,40 +505,20 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             </div>
           </FadeInSection>
 
-          {/* SECCIÓN NUESTRA HISTORIA 3: EL SACRIFICIO */}
+          {/* SECCIÓN NUESTRA HISTORIA 4: UN PROYECTO DE VIDA */}
           <FadeInSection className="w-full mb-20" delay="300ms">
-            <SectionTitleWithOrnament>Todo por amor</SectionTitleWithOrnament>
+            <SectionTitleWithOrnament>Un proyecto de vida</SectionTitleWithOrnament>
             <div className="max-w-md mx-auto mb-10 px-4">
               <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
-                Llegó el momento de tomar una de las decisiones más valientes. Juanjo lo dejó todo por amor,
-                cerrando una etapa en Barcelona para apostar por un futuro juntos, demostrando que cuando el sentimiento es real, el hogar está donde esté la otra persona.
+                Juanjo dejó Barcelona para empezar una nueva vida con Lis en Madrid.
+                <br /><br />
+                Lo que comenzó en una noche inesperada acabó convirtiéndose en un proyecto de vida.
               </p>
             </div>
 
             <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
               <img
-                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/63a2cf6c-5515-4343-b505-8f00be458419.png"
-                alt="Sacrificio por amor"
-                loading="lazy"
-                decoding="async"
-                className="w-full h-auto object-cover"
-              />
-            </div>
-          </FadeInSection>
-
-          {/* SECCIÓN NUESTRA HISTORIA 4: EL HOGAR */}
-          <FadeInSection className="w-full mb-20" delay="300ms">
-            <SectionTitleWithOrnament>Creamos un hogar</SectionTitleWithOrnament>
-            <div className="max-w-md mx-auto mb-10 px-4">
-              <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
-                Poco a poco, fuimos construyendo nuestro propio mundo, llenando cada rincón de sueños, risas y proyectos compartidos.
-                Hoy, nuestro hogar es el refugio donde celebramos la vida cada día.
-              </p>
-            </div>
-
-            <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
-              <img
-                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/72f6c064-bed0-458c-90d4-dfa0e525aca0.png"
+                src="/boda/historia-hogar.png"
                 alt="Nuestro hogar"
                 loading="lazy"
                 decoding="async"
@@ -472,18 +527,26 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             </div>
           </FadeInSection>
 
-          {/* SECCIÓN NUESTRA HISTORIA 5: TU PARTE */}
+          {/* SECCIÓN NUESTRA HISTORIA 5: SÉ PARTE DE NOSOTROS */}
           <FadeInSection className="w-full mb-12" delay="300ms">
             <SectionTitleWithOrnament>Sé parte de nosotros</SectionTitleWithOrnament>
             <div className="max-w-md mx-auto mb-10 px-4">
               <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
-                Ahora queremos que tú seas parte de nuestra historia. Este capítulo final no estaría completo sin tu presencia en el día más importante de nuestras vidas.
+                Y ahora queremos celebrar de forma oficial lo que el corazón ya sabía desde el principio.
+                <br /><br />
+                Nos casamos.
+                <br /><br />
+                Nos haría muchísima ilusión que estuvieras allí. Porque eres una parte importante de nuestras vidas.
+                <br /><br />
+                Para compartirlo.<br />
+                Para sentirlo.<br />
+                Para celebrarlo juntos.
               </p>
             </div>
 
             <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
               <img
-                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/d9b6e4aa-df92-467e-8f3f-a62bd5652f6d.png"
+                src="/boda/historia-parte.png"
                 alt="Sé parte de nuestra historia"
                 loading="lazy"
                 decoding="async"
@@ -498,7 +561,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
             <div className="flex justify-center w-full px-8 mb-10">
               <img
-                src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/FECHA.png"
+                src="/boda/fecha.png"
                 alt="Calendario"
                 loading="lazy"
                 decoding="async"
@@ -509,7 +572,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             <div className="flex flex-col items-center mt-6 w-full px-4">
               <div className="relative overflow-hidden bg-[#faf8f5] border-[0.5px] border-[#e5d5c5]/80 shadow-[0_4px_15px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.03)] rounded-sm py-6 px-4 sm:py-8 sm:px-12 w-full max-w-sm flex flex-col items-center mx-auto">
                 {/* Textura de papel para el cuadro */}
-                <div className="absolute inset-0 opacity-40 pointer-events-none mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cream-paper.png")' }}></div>
+                <div className="absolute inset-0 opacity-40 pointer-events-none mix-blend-multiply" style={{ backgroundImage: 'url("/boda/cream-paper.png")' }}></div>
 
                 <div className="relative z-10 flex flex-col items-center w-full min-w-0">
                   <div
@@ -541,14 +604,17 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             <div className="flex flex-col items-center">
               <div className="mb-6 max-w-md px-2 text-center">
                 <p className="text-lg sm:text-xl text-wine-dark/85 font-serif italic mb-3">
-                  La Casa Rural Spa La Batipuerta
+                  La Batípuerta
                 </p>
                 <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed">
-                  Calle Los Cantos, nº 2 (o nº 8 según contacto)
+                  Candelario, Salamanca
+                </p>
+                <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic leading-relaxed mt-4">
+                  Ceremonia y celebración en el mismo lugar.
                   <br />
-                  <span className="mt-2 inline-block">
-                    Candelario, Salamanca · 37710
-                  </span>
+                  Cóctel al atardecer, cena y fiesta hasta las 00:00…
+                  <br />
+                  y después, lo que surja.
                 </p>
                 <button
                   type="button"
@@ -560,65 +626,15 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 </button>
               </div>
 
-              <div className="w-[calc(100%+24px)] md:w-full max-w-md -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5 mb-8">
+              <div className="w-[calc(100%+24px)] md:w-full max-w-md -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
                 <img
-                  src="https://sobdpvsovjixsvpsfmvr.supabase.co/storage/v1/object/public/Boda%20Lis%20y%20Juanjo/casa%20rural.jpg"
-                  alt="La Casa Rural Spa La Batipuerta — Candelario, Salamanca"
+                  src="/boda/casa-rural.jpg"
+                  alt="La Batípuerta — Candelario"
                   loading="lazy"
                   decoding="async"
                   className="w-full h-auto object-cover cursor-pointer hover:opacity-95 transition-opacity duration-300"
                   onClick={() => window.open(VENUE_GOOGLE_MAPS_URL, "_blank")}
                 />
-              </div>
-
-              <button
-                type="button"
-                className="bg-wine text-cream px-8 py-3 rounded-sm text-xs sm:text-sm uppercase tracking-widest hover:bg-wine-dark hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-                onClick={() => window.open(VENUE_GOOGLE_MAPS_URL, "_blank")}
-              >
-                Ver cómo llegar
-              </button>
-            </div>
-          </FadeInSection>
-
-          {/* CÓDIGO DE VESTIMENTA */}
-          <FadeInSection className="w-full mb-16" delay="500ms">
-            <SectionTitleWithOrnament>Cómo ir vestido</SectionTitleWithOrnament>
-
-            {/* Toggle */}
-            <div className="flex justify-center mb-8">
-              <div className="bg-[#e5d5c5]/20 p-1 rounded-sm inline-flex border border-[#e5d5c5]/60 shadow-inner">
-                <button
-                  onClick={() => setDressGender('Mujer')}
-                  className={`px-8 py-2 text-sm uppercase tracking-widest transition-all duration-300 ${dressGender === 'Mujer' ? 'bg-wine text-cream shadow-sm rounded-[1px]' : 'text-wine-dark/70 hover:text-wine'}`}
-                >
-                  Mujer
-                </button>
-                <button
-                  onClick={() => setDressGender('Hombre')}
-                  className={`px-8 py-2 text-sm uppercase tracking-widest transition-all duration-300 ${dressGender === 'Hombre' ? 'bg-wine text-cream shadow-sm rounded-[1px]' : 'text-wine-dark/70 hover:text-wine'}`}
-                >
-                  Hombre
-                </button>
-              </div>
-            </div>
-
-            {/* Carousel */}
-            <div className="w-full overflow-hidden">
-              <div className="flex w-full gap-4 overflow-x-auto snap-x snap-mandatory pb-6 px-4 -mx-4 hide-scrollbar justify-start md:justify-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                {dressGender === 'Mujer' ? (
-                  <>
-                    <img src="https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 1" loading="lazy" decoding="async" />
-                    <img src="https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 2" loading="lazy" decoding="async" />
-                    <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code mujer 3" loading="lazy" decoding="async" />
-                  </>
-                ) : (
-                  <>
-                    <img src="https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 1" loading="lazy" decoding="async" />
-                    <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 2" loading="lazy" decoding="async" />
-                    <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&h=600&fit=crop" className="snap-center shrink-0 w-[65%] sm:w-[220px] rounded-sm shadow-md object-cover h-[350px]" alt="Dress code hombre 3" loading="lazy" decoding="async" />
-                  </>
-                )}
               </div>
             </div>
           </FadeInSection>
@@ -627,26 +643,35 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
           <FadeInSection className="w-full mb-16" delay="600ms">
             <div className="w-full border-y border-[#e5d5c5]/60 py-10 bg-[#e5d5c5]/10 px-6 rounded-sm">
               <SectionTitleWithOrnament>Sobre el regalo</SectionTitleWithOrnament>
-              <p className="text-sm text-wine-dark/80 mb-6 font-serif italic max-w-sm mx-auto">
-                Vuestra presencia es el mejor regalo que podríamos pedir.
-                Sin embargo, si deseáis hacernos un detalle, os dejamos nuestro número de cuenta:
+              <p className="text-sm sm:text-base text-wine-dark/80 mb-6 font-serif italic max-w-sm mx-auto leading-relaxed">
+                Tu presencia es el mejor regalo para comenzar esta nueva etapa.
+                <br /><br />
+                Y si además quieres ayudarnos a seguir construyendo nuestro hogar, puedes hacerlo aquí:
               </p>
-              <div className="bg-white/60 p-4 rounded-sm border border-wine/10 inline-block text-sm sm:text-base text-wine-dark break-all">
-                Transferencia bancaria a IBAN:<br />
-                <span className="font-bold tracking-widest mt-2 inline-block font-mono text-base md:text-lg text-wine">xxxxxxxxx</span>
+              <div className="bg-white/60 p-4 rounded-sm border border-wine/10 inline-block text-sm sm:text-base text-wine-dark break-all mb-6">
+                Titulares: Lis & Juanjo<br />
+                IBAN: <span className="font-bold tracking-widest mt-2 inline-block font-mono text-base md:text-lg text-wine">XXXX</span>
               </div>
+              <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic max-w-sm mx-auto leading-relaxed">
+                Gracias por acompañarnos en el día que, sin saberlo, el destino llevaba tiempo preparando.
+              </p>
             </div>
           </FadeInSection>
 
           {/* RSVP FORM Y COUNTDOWN */}
           <FadeInSection className="w-full mb-16" delay="700ms">
-            <SectionTitleWithOrnament>Asistencia</SectionTitleWithOrnament>
-            <p className="text-sm text-wine-dark/70 mb-4 font-serif italic px-4">Por favor, confirma tu asistencia para que podamos organizar los detalles.</p>
+            <SectionTitleWithOrnament>Confirmación</SectionTitleWithOrnament>
+            
+            <p className="text-sm text-wine-dark/80 mb-6 font-serif italic px-4 max-w-sm mx-auto">
+              Te agradeceríamos que confirmaras antes de abril de 2026.
+              <br /><br />
+              Si tienes alguna alergia o intolerancia, cuéntanoslo al confirmar asistencia. Queremos que todo esté perfecto para ti.
+            </p>
 
             {/* COUNTDOWN — mismo ancho que el contenido de la tarjeta (sin sangrar fuera del padding) */}
             <div className="mb-10 w-full rounded-sm border-y border-[#e5d5c5]/60 py-8 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
               <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-wine-dark/80 mb-5 font-medium px-2 sm:px-0 text-center">
-                {guestName !== "Invitado" ? `${guestName.split(" ")[0]}, confirma antes del 10 de Mayo de 2026` : "Confirma antes del 10 de Mayo de 2026"}
+                {guestName !== "Invitado" ? `${guestName.split(" ")[0]}, confirma antes de abril de 2026` : "Confirma antes de abril de 2026"}
               </p>
               <div className="flex justify-center gap-2 sm:gap-6 font-serif px-2 sm:px-0">
                 <div className="flex flex-col items-center min-w-0">
@@ -699,17 +724,15 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                   className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium"
                   htmlFor="rsvp-email"
                 >
-                  Correo electrónico
+                  Alergias o comentarios
                 </label>
                 <input
                   id="rsvp-email"
-                  type="email"
+                  type="text"
                   value={rsvpEmail}
                   onChange={e => setRsvpEmail(e.target.value)}
-                  autoComplete="email"
                   className="w-full border-b-[1.5px] border-wine/30 bg-transparent py-2 px-1 text-wine-dark focus:outline-none focus:border-wine transition-colors placeholder:text-wine/30 font-serif italic"
-                  placeholder="tu@correo.com"
-                  required
+                  placeholder="Ej: Soy celíaco, etc."
                 />
               </div>
 

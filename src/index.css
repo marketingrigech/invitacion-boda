@@ -219,3 +219,13 @@ h6 {
   transform-origin: right center;
   animation: rope-snap-right 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+/* Carruseles: ocultar barra de scroll manteniendo el deslizamiento */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
