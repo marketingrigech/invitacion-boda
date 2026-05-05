@@ -43,6 +43,30 @@ function getGuestStateFromUrl() {
 
 const VENUE_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4hmsB7UvMiubGZLWA"
 
+/** Fotos de la finca (carpeta public/boda/Finca). Orden: 12.14.32 → 12.14.33 (1)…(11). */
+const FINCA_IMAGE_FILENAMES = [
+  "WhatsApp Image 2026-05-05 at 12.14.32.jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.32 (1).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.32 (2).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.32 (3).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33.jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (1).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (2).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (3).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (4).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (5).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (6).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (7).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (8).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (9).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (10).jpeg",
+  "WhatsApp Image 2026-05-05 at 12.14.33 (11).jpeg",
+]
+
+const FINCA_IMAGE_URLS = FINCA_IMAGE_FILENAMES.map(
+  name => `/boda/Finca/${encodeURIComponent(name)}`,
+)
+
 /** WhatsApp en formato internacional sin + ni espacios (confirmaciones de asistencia). */
 const RSVP_WHATSAPP_PHONE = "34655935191"
 
@@ -213,6 +237,94 @@ function IconCalendarIcs({ className }) {
       <path d="M8 2v4M16 2v4M4 9h16" />
       <path d="M12 14v6M12 17l2.5 2M12 17l-2.5 2" />
     </svg>
+  )
+}
+
+/** Carrusel de fotos de la finca en «¿Dónde será?». */
+function VenueFincaCarousel() {
+  const total = FINCA_IMAGE_URLS.length
+  const [index, setIndex] = useState(0)
+  const touchStartX = useRef(null)
+
+  const go = d => {
+    setIndex(i => (i + d + total) % total)
+  }
+
+  const onTouchStart = e => {
+    touchStartX.current = e.touches[0]?.clientX ?? null
+  }
+
+  const onTouchEnd = e => {
+    const start = touchStartX.current
+    touchStartX.current = null
+    if (start == null) return
+    const end = e.changedTouches[0].clientX
+    const dx = end - start
+    if (dx > 48) go(-1)
+    else if (dx < -48) go(1)
+  }
+
+  return (
+    <div
+      className="relative w-full"
+      role="region"
+      aria-roledescription="carrusel"
+      aria-label="Fotografías de La Batípuerta"
+    >
+      <div
+        className="relative aspect-[4/5] w-full overflow-hidden bg-[#e8e4df] sm:aspect-[4/3]"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        <img
+          src={FINCA_IMAGE_URLS[index]}
+          alt={`La Batípuerta, Candelario — foto ${index + 1} de ${total}`}
+          loading={index === 0 ? "eager" : "lazy"}
+          decoding="async"
+          draggable={false}
+          className="h-full w-full cursor-pointer object-cover object-center transition-opacity duration-300 hover:opacity-[0.97]"
+          onClick={() => window.open(VENUE_GOOGLE_MAPS_URL, "_blank", "noopener,noreferrer")}
+        />
+        {total > 1 ? (
+          <>
+            <button
+              type="button"
+              aria-label="Foto anterior"
+              onClick={e => {
+                e.stopPropagation()
+                go(-1)
+              }}
+              className="absolute left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-wine/25 bg-[#fbfaf9]/95 text-wine shadow-md backdrop-blur-[2px] transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/40"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              aria-label="Foto siguiente"
+              onClick={e => {
+                e.stopPropagation()
+                go(1)
+              }}
+              className="absolute right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-wine/25 bg-[#fbfaf9]/95 text-wine shadow-md backdrop-blur-[2px] transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/40"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </>
+        ) : null}
+      </div>
+      {total > 1 ? (
+        <p
+          className="border-t border-white/80 bg-white/40 py-2 text-center text-[11px] tabular-nums tracking-[0.14em] text-wine-dark/55"
+          aria-live="polite"
+        >
+          {index + 1} · {total}
+        </p>
+      ) : null}
+    </div>
   )
 }
 
@@ -759,14 +871,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
               </div>
 
               <div className="w-[calc(100%+24px)] md:w-full max-w-md -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
-                <img
-                  src="/boda/casa-rural.jpg"
-                  alt="La Batípuerta — Candelario"
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-auto object-cover cursor-pointer hover:opacity-95 transition-opacity duration-300"
-                  onClick={() => window.open(VENUE_GOOGLE_MAPS_URL, "_blank")}
-                />
+                <VenueFincaCarousel />
               </div>
             </div>
           </FadeInSection>
