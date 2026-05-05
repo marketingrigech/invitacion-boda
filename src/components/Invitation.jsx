@@ -911,16 +911,16 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 <br /><br />
                 Y si además quieres ayudarnos a seguir construyendo nuestro hogar, puedes hacerlo aquí:
               </p>
-              <div className="bg-white/60 p-4 rounded-sm border border-wine/10 inline-block text-sm sm:text-base text-wine-dark break-all mb-6">
+              <div className="bg-white/60 p-4 rounded-sm border border-wine/10 inline-block text-sm sm:text-base text-wine-dark break-all mb-6 max-w-full">
                 Titulares: Lis & Juanjo<br />
                 IBAN:{" "}
                 <span className="font-bold tracking-wide sm:tracking-wider mt-2 inline-block font-mono text-sm sm:text-base md:text-lg text-wine">
                   ES76&nbsp;0073&nbsp;0100&nbsp;5504&nbsp;6566&nbsp;5778
                 </span>
+                <p className="mt-4 border-t border-wine/15 pt-3 text-center text-sm sm:text-base text-wine-dark/75 font-serif italic leading-relaxed break-normal">
+                  También se acepta dinero en efectivo y sobre con amor 💌
+                </p>
               </div>
-              <p className="text-sm sm:text-base text-wine-dark/75 font-serif italic max-w-sm mx-auto text-center mb-6 leading-relaxed">
-                También se acepta dinero en efectivo y sobre con amor 💌
-              </p>
               <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic max-w-sm mx-auto leading-relaxed">
                 Gracias por acompañarnos en el día que, sin saberlo, el destino llevaba tiempo preparando.
               </p>
@@ -929,20 +929,8 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* RSVP FORM Y COUNTDOWN */}
           <FadeInSection className="w-full mb-16" delay="700ms">
-            <SectionTitleWithOrnament>Confirmación</SectionTitleWithOrnament>
-            
-            <p className="text-sm sm:text-base text-wine-dark/80 mb-6 font-serif italic px-4 max-w-sm mx-auto leading-relaxed">
-              Te agradeceríamos que confirmaras antes del{" "}
-              <strong className="font-bold not-italic text-wine-dark">25 de junio de 2026</strong>.
-              <br /><br />
-              Si tienes alguna alergia o intolerancia, cuéntanoslo al confirmar asistencia. Queremos que todo esté perfecto para ti.
-            </p>
-
             {/* Cuenta atrás + recordatorio calendario */}
             <div className="mb-8 w-full rounded-sm border-y border-[#e5d5c5]/60 py-6 sm:py-7 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
-              <p className="text-2xl sm:text-3xl md:text-4xl text-wine-dark mb-2 font-bold px-3 sm:px-4 text-center leading-tight font-serif">
-                Confirma tu asistencia
-              </p>
               <p className="text-lg sm:text-xl md:text-2xl text-wine-dark mb-5 font-bold px-3 sm:px-4 text-center font-serif tracking-wide">
                 25 de junio de 2026
               </p>
