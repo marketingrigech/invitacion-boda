@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import confetti from "canvas-confetti"
+import ImageLightbox from "./ImageLightbox"
 
 /**
  * Lee el nombre del invitado y si viene con acompañante desde la URL.
