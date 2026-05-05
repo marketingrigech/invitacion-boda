@@ -651,8 +651,8 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             <div className="w-[calc(100%+48px)] sm:w-[calc(100%+96px)] -mx-6 sm:-mx-12 -mt-16 mb-6 overflow-hidden relative z-10 shadow-[0_12px_40px_rgba(62,42,42,0.12)] border-b-[0.5px] border-[#e5d5c5]/60">
               {/* Foto principal: mismo encuadre en todos los dispositivos (aspect-ratio + object-position únicos) */}
               <div className="relative bg-[#f8f5f1]">
-                <div className="px-5 pt-8 pb-4 sm:px-7 sm:pt-10 sm:pb-5">
-                  <p className="text-center font-serif font-bold italic tracking-[0.12em] text-wine-dark text-[clamp(2.35rem,9.5vw,4.25rem)] sm:tracking-[0.14em] md:tracking-[0.16em]">
+                <div className="w-full max-w-full px-5 pt-8 pb-4 sm:px-7 sm:pt-10 sm:pb-5 [container-type:inline-size]">
+                  <p className="whitespace-nowrap text-center font-serif font-bold italic tracking-[0.07em] text-wine-dark text-[clamp(1.05rem,11cqw,2.65rem)] sm:tracking-[0.1em] md:tracking-[0.12em]">
                     ¡NOS CASAMOS!
                   </p>
                 </div>
