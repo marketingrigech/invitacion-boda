@@ -918,6 +918,9 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                   ES76&nbsp;0073&nbsp;0100&nbsp;5504&nbsp;6566&nbsp;5778
                 </span>
               </div>
+              <p className="text-sm sm:text-base text-wine-dark/75 font-serif italic max-w-sm mx-auto text-center mb-6 leading-relaxed">
+                También se acepta dinero en efectivo y sobre con amor 💌
+              </p>
               <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic max-w-sm mx-auto leading-relaxed">
                 Gracias por acompañarnos en el día que, sin saberlo, el destino llevaba tiempo preparando.
               </p>
