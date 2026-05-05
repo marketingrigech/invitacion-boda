@@ -521,8 +521,8 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
               {/* Foto principal + firma debajo (en flujo, no superpuesta) */}
               <div className="relative bg-[#f8f5f1]">
                 {/* Marco fino, sin el bloque blanco grueso; abraza la imagen para no dejar franjas vacías */}
-                <div className="relative w-fit max-w-full mx-auto overflow-hidden rounded-[2px] border border-[#e3d5c7] bg-[#faf8f5] shadow-[0_4px_18px_rgba(62,42,42,0.08),inset_0_0_0_1px_rgba(255,255,255,0.4)]">
-                  <div className="relative w-full">
+                <div className="relative w-full overflow-hidden rounded-[2px] border border-[#e3d5c7] bg-[#faf8f5] shadow-[0_4px_18px_rgba(62,42,42,0.08),inset_0_0_0_1px_rgba(255,255,255,0.4)]">
+                  <div className="relative w-full overflow-hidden">
                     <img
                       src="/boda/Nos-casamos.jpg"
                       alt="Lis y Juanjo — Nos casamos"
@@ -530,7 +530,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                       decoding="async"
                       onLoad={onHeroImageSettled}
                       onError={onHeroImageSettled}
-                      className="mx-auto block h-auto w-full max-w-full max-h-[min(58svh,620px)] object-contain object-center transition-transform duration-[1000ms] ease-out motion-safe:hover:scale-[1.02]"
+                      className="block h-[min(58svh,620px)] w-full object-cover object-[center_22%] sm:object-center transition-transform duration-[1000ms] ease-out motion-safe:hover:scale-[1.02]"
                     />
                     <div className="pointer-events-none absolute inset-0 z-[2] flex justify-center px-4 pt-[10%] sm:pt-[12%] md:pt-[14%]">
                       <p className="text-center font-serif font-bold italic tracking-[0.1em] text-wine-dark drop-shadow-[0_2px_20px_rgba(255,255,255,0.98)] sm:tracking-[0.14em] md:tracking-[0.16em] text-[clamp(2.35rem,9vw,4.25rem)] sm:text-[clamp(2.5rem,10vw,4.75rem)]">
