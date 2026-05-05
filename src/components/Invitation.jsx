@@ -932,8 +932,9 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             {/* Cuenta atrás + recordatorio calendario */}
             <div className="mb-8 w-full rounded-sm border-y border-[#e5d5c5]/60 py-6 sm:py-7 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
               <p className="text-lg sm:text-xl md:text-2xl text-wine-dark mb-5 px-3 sm:px-4 text-center leading-snug font-serif font-bold">
-                La fecha de confirmación límite es el{" "}
-                <span className="text-wine">25 de junio de 2026</span>
+                La fecha de confirmación límite es el:
+                <br />
+                <span className="text-wine mt-1 inline-block">25 de junio de 2026</span>
               </p>
               <div className="flex justify-center gap-0.5 sm:gap-3 md:gap-5 px-0.5 sm:px-0">
                 <div className="flex flex-col items-center min-w-0">
