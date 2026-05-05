@@ -688,7 +688,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
             <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
               <img
-                src={`/boda/${encodeURIComponent("historia pgra.png")}`}
+                src="/boda/historia-praga.png"
                 alt="Cómo nos conocimos"
                 loading="lazy"
                 decoding="async"
