@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import Invitation from "./components/Invitation"
 import Envelope from "./components/Envelope"
 
-const BG_IMAGE = "/boda/fondo-pagina.png"
+const BG_IMAGE = "/boda/fondo-pagina.webp"
 
 function App() {
   const [isReady, setIsReady] = useState(false)

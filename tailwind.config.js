@@ -25,9 +25,6 @@ export default {
       animation: {
         "fade-out-overlay": "fade-out-overlay 1.2s ease-out forwards",
       },
-      backgroundImage: {
-        'grape-pattern': "url('/boda/uvas.png')"
-      }
     },
   },
   plugins: [],

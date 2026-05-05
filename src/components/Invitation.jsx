@@ -607,7 +607,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
         className={`fixed inset-0 z-0 bg-cover bg-center transition-opacity duration-[2000ms] ease-in-out pointer-events-none
           ${showWelcomeBg ? 'opacity-100' : 'opacity-0'}
         `}
-        style={{ backgroundImage: `url('/boda/fondo-nombre-bienvenida.png')` }}
+        style={{ backgroundImage: `url('/boda/fondo-nombre-bienvenida.webp')` }}
       ></div>
 
       {/* NOMBRE DEL INVITADO EN TODA LA PÁGINA */}
@@ -649,29 +649,31 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           <FadeInSection className="w-full mb-14" delay="200ms">
             <div className="w-[calc(100%+48px)] sm:w-[calc(100%+96px)] -mx-6 sm:-mx-12 -mt-16 mb-6 overflow-hidden relative z-10 shadow-[0_12px_40px_rgba(62,42,42,0.12)] border-b-[0.5px] border-[#e5d5c5]/60">
-              {/* Foto principal + firma debajo (en flujo, no superpuesta) */}
+              {/* Foto principal: mismo encuadre en todos los dispositivos (aspect-ratio + object-position únicos) */}
               <div className="relative bg-[#f8f5f1]">
-                {/* Marco fino, sin el bloque blanco grueso; abraza la imagen para no dejar franjas vacías */}
-                <div className="relative w-full overflow-hidden rounded-[2px] border border-[#e3d5c7] bg-[#faf8f5] shadow-[0_4px_18px_rgba(62,42,42,0.08),inset_0_0_0_1px_rgba(255,255,255,0.4)]">
-                  <div className="relative w-full overflow-hidden">
-                    <img
-                      src="/boda/Nos-casamos.jpg"
-                      alt="Lis y Juanjo — Nos casamos"
-                      fetchPriority="high"
-                      decoding="async"
-                      onLoad={onHeroImageSettled}
-                      onError={onHeroImageSettled}
-                      className="block h-[min(58svh,620px)] w-full object-cover object-[center_22%] sm:object-center transition-transform duration-[1000ms] ease-out motion-safe:hover:scale-[1.02]"
-                    />
-                    <div className="pointer-events-none absolute inset-0 z-[2] flex justify-center px-4 pt-[10%] sm:pt-[12%] md:pt-[14%]">
-                      <p className="text-center font-serif font-bold italic tracking-[0.1em] text-wine-dark drop-shadow-[0_2px_20px_rgba(255,255,255,0.98)] sm:tracking-[0.14em] md:tracking-[0.16em] text-[clamp(2.35rem,9vw,4.25rem)] sm:text-[clamp(2.5rem,10vw,4.75rem)]">
-                        ¡NOS CASAMOS!
-                      </p>
+                <div className="px-5 pt-8 pb-4 sm:px-7 sm:pt-10 sm:pb-5">
+                  <p className="text-center font-serif font-bold italic tracking-[0.12em] text-wine-dark text-[clamp(2.35rem,9.5vw,4.25rem)] sm:tracking-[0.14em] md:tracking-[0.16em]">
+                    ¡NOS CASAMOS!
+                  </p>
+                </div>
+                {/* Marco fino; altura derivada del ancho de la tarjeta → recorte predecible */}
+                <div className="px-4 pb-1 sm:px-6">
+                  <div className="relative w-full overflow-hidden rounded-[2px] border border-[#e3d5c7] bg-[#faf8f5] shadow-[0_4px_18px_rgba(62,42,42,0.08),inset_0_0_0_1px_rgba(255,255,255,0.4)]">
+                    <div className="group relative w-full overflow-hidden aspect-[4/5]">
+                      <img
+                        src="/boda/Nos-casamos.jpg"
+                        alt="Lis y Juanjo — Nos casamos"
+                        fetchPriority="high"
+                        decoding="async"
+                        onLoad={onHeroImageSettled}
+                        onError={onHeroImageSettled}
+                        className="absolute inset-0 h-full w-full object-cover object-[center_30%] transition-transform duration-[1000ms] ease-out motion-safe:group-hover:scale-[1.02]"
+                      />
+                      <div
+                        className="pointer-events-none absolute inset-0 z-[1] shadow-[inset_0_0_24px_rgba(71,20,33,0.04)]"
+                        aria-hidden
+                      />
                     </div>
-                    <div
-                      className="pointer-events-none absolute inset-0 z-[1] shadow-[inset_0_0_24px_rgba(71,20,33,0.04)]"
-                      aria-hidden
-                    />
                   </div>
                 </div>
                 <div className="flex w-full justify-center px-4 pt-5 pb-1">
@@ -812,6 +814,24 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 Para sentirlo.<br />
                 Para celebrarlo juntos.
               </p>
+              <div className="mt-10 flex flex-col items-center text-center">
+                <p className="inline-flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 font-serif text-2xl sm:text-3xl md:text-4xl text-neutral-500 italic font-medium tracking-[0.04em]">
+                  <span>Te esperamos</span>
+                  <svg
+                    className="h-[0.95em] w-[0.95em] shrink-0 text-neutral-400"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden
+                  >
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                </p>
+                {guestName !== "Invitado" ? (
+                  <p className="mt-3 font-serif text-2xl sm:text-[1.65rem] text-wine-dark font-semibold tracking-wide leading-snug">
+                    {guestName}
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
@@ -943,17 +963,17 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 </div>
                 <span className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{timeLeft.horas ?? 0}</span>
+                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{String(timeLeft.horas ?? 0).padStart(2, "0")}</span>
                   <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Hrs</span>
                 </div>
                 <span className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{timeLeft.minutos ?? 0}</span>
+                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{String(timeLeft.minutos ?? 0).padStart(2, "0")}</span>
                   <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Min</span>
                 </div>
                 <span className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{timeLeft.segundos ?? 0}</span>
+                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{String(timeLeft.segundos ?? 0).padStart(2, "0")}</span>
                   <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Seg</span>
                 </div>
               </div>

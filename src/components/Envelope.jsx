@@ -321,8 +321,8 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
             }, 4500);
         }, 600);
     };
-    const floralPattern = "url('/boda/fondos-puertas.png')";
-    const interiorPattern = "url('/boda/sobre-interior.png')";
+    const floralPattern = "url('/boda/fondos-puertas.webp')";
+    const interiorPattern = "url('/boda/sobre-interior.webp')";
 
     return (
         <div className={`fixed inset-0 z-50 overflow-hidden flex items-center justify-center transition-all duration-[2000ms] ${isOpen ? 'pointer-events-none opacity-0 delay-[2500ms]' : 'opacity-100 delay-0'}`}>
@@ -391,7 +391,7 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
                     onClick={handleCut}
                 >
                     <img
-                        src="/boda/sello.png"
+                        src="/boda/sello.webp"
                         alt="Sello de cera"
                         className="w-32 md:w-40 h-auto select-none transition-transform duration-300"
                         style={{ filter: 'drop-shadow(0px 10px 15px rgba(0,0,0,0.35))' }}

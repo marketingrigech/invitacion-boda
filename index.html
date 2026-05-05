@@ -2,14 +2,15 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/boda/sello.png" />
+    <link rel="icon" type="image/webp" href="/boda/sello.webp" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>🥳Boda Lis &amp; Juanjo</title>
-    <!-- Precarga de imágenes críticas del sobre para evitar saltos al cargar -->
-    <link rel="preload" as="image" href="/boda/fondos-puertas.png" />
-    <link rel="preload" as="image" href="/boda/sobre-interior.png" />
-    <link rel="preload" as="image" href="/boda/sello.png" />
-    <link rel="preload" as="image" href="/boda/fondo-pagina.png" />
+    <!-- Conexión anticipada a Google Fonts para reducir latencia -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Precarga solo de las imágenes visibles en el primer frame (el sobre) -->
+    <link rel="preload" as="image" href="/boda/fondos-puertas.webp" />
+    <link rel="preload" as="image" href="/boda/sello.webp" />
   </head>
   <body>
     <div id="root"></div>
