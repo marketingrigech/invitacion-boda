@@ -913,7 +913,10 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
               </p>
               <div className="bg-white/60 p-4 rounded-sm border border-wine/10 inline-block text-sm sm:text-base text-wine-dark break-all mb-6">
                 Titulares: Lis & Juanjo<br />
-                IBAN: <span className="font-bold tracking-widest mt-2 inline-block font-mono text-base md:text-lg text-wine">XXXX</span>
+                IBAN:{" "}
+                <span className="font-bold tracking-wide sm:tracking-wider mt-2 inline-block font-mono text-sm sm:text-base md:text-lg text-wine">
+                  ES76&nbsp;0073&nbsp;0100&nbsp;5504&nbsp;6566&nbsp;5778
+                </span>
               </div>
               <p className="text-sm sm:text-base text-wine-dark/80 font-serif italic max-w-sm mx-auto leading-relaxed">
                 Gracias por acompañarnos en el día que, sin saberlo, el destino llevaba tiempo preparando.
