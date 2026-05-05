@@ -849,38 +849,39 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
           <FadeInSection className="w-full mb-16 mt-8" delay="400ms">
             <SectionTitleWithOrnament>{guestName !== "Invitado" ? `${guestName.split(" ")[0]}, guárdate este día` : "Guárdate este día"}</SectionTitleWithOrnament>
 
-            <div className="flex justify-center w-full px-8 mb-10">
+            {/* Calendario: bleed + zoom ligero para comer márgenes del PNG y llenar el ancho */}
+            <div className="w-[calc(100%+48px)] sm:w-[calc(100%+96px)] max-w-none -mx-6 sm:-mx-12 mb-10 overflow-hidden">
               <img
                 src="/boda/fecha.png"
                 alt="Calendario"
                 loading="lazy"
                 decoding="async"
-                className="w-full max-w-[280px] sm:max-w-[320px] opacity-90 scale-110 mix-blend-multiply"
+                className="relative left-1/2 block h-auto w-[124%] max-w-none -translate-x-1/2 opacity-90 mix-blend-multiply sm:w-[118%]"
               />
             </div>
 
-            <div className="flex flex-col items-center mt-6 w-full px-4">
-              <div className="relative overflow-hidden bg-[#faf8f5] border-[0.5px] border-[#e5d5c5]/80 shadow-[0_4px_15px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.03)] rounded-sm py-6 px-4 sm:py-8 sm:px-12 w-full max-w-sm flex flex-col items-center mx-auto">
+            <div className="flex flex-col items-center mt-6 w-[calc(100%+48px)] sm:w-[calc(100%+96px)] max-w-none -mx-6 sm:-mx-12">
+              <div className="relative overflow-hidden bg-[#faf8f5] border-[0.5px] border-[#e5d5c5]/80 shadow-[0_4px_15px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.03)] rounded-sm py-9 px-6 sm:py-12 sm:px-10 w-full flex flex-col items-center mx-auto">
                 {/* Textura de papel para el cuadro */}
                 <div className="absolute inset-0 opacity-40 pointer-events-none mix-blend-multiply" style={{ backgroundImage: 'url("/boda/cream-paper.png")' }}></div>
 
                 <div className="relative z-10 flex flex-col items-center w-full min-w-0">
                   <div
-                    className="flex flex-col items-center gap-1 sm:gap-1.5 font-sans font-light text-wine tabular-nums"
+                    className="flex flex-col items-center gap-0.5 sm:gap-1 font-sans font-light text-wine tabular-nums"
                     aria-label="19 de septiembre de 2026"
                   >
-                    <span className="text-3xl leading-none tracking-[0.08em] sm:text-4xl md:text-5xl">19</span>
-                    <span className="text-lg leading-none text-wine/45 select-none sm:text-xl" aria-hidden>
+                    <span className="text-5xl leading-[0.95] tracking-[0.06em] sm:text-6xl md:text-7xl lg:text-8xl">19</span>
+                    <span className="text-2xl leading-none text-wine/45 select-none sm:text-3xl md:text-4xl py-0.5" aria-hidden>
                       −
                     </span>
-                    <span className="text-3xl leading-none tracking-[0.08em] sm:text-4xl md:text-5xl">09</span>
-                    <span className="text-lg leading-none text-wine/45 select-none sm:text-xl" aria-hidden>
+                    <span className="text-5xl leading-[0.95] tracking-[0.06em] sm:text-6xl md:text-7xl lg:text-8xl">09</span>
+                    <span className="text-2xl leading-none text-wine/45 select-none sm:text-3xl md:text-4xl py-0.5" aria-hidden>
                       −
                     </span>
-                    <span className="text-3xl leading-none tracking-[0.08em] sm:text-4xl md:text-5xl">26</span>
+                    <span className="text-5xl leading-[0.95] tracking-[0.06em] sm:text-6xl md:text-7xl lg:text-8xl">26</span>
                   </div>
-                  <div className="w-12 sm:w-16 h-px bg-wine/25 mx-auto my-4 sm:my-5" />
-                  <p className="font-sans text-base sm:text-lg md:text-xl text-wine-dark/85 font-normal tracking-[0.12em] text-center">
+                  <div className="w-16 sm:w-24 h-px bg-wine/25 mx-auto my-5 sm:my-7" />
+                  <p className="font-sans text-xl sm:text-2xl md:text-3xl text-wine-dark/85 font-normal tracking-[0.12em] text-center">
                     a las 17:00
                   </p>
                 </div>
