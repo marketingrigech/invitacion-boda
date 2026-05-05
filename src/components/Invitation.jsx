@@ -65,6 +65,38 @@ const WEDDING_CEREMONY_TARGET_MS = Date.UTC(2026, 8, 19, 15, 0, 0)
 
 const WEDDING_ICS_LOCATION = "La Batípuerta, Candelario, Salamanca"
 
+const CAL_EVENT_SUMMARY = "Boda Lis y Juanjo"
+const CAL_EVENT_DESCRIPTION = `Ceremonia y celebración (${WEDDING_ICS_LOCATION}). Confirma tu asistencia antes del 25 de junio de 2026.`
+/** Mismo intervalo que el .ics (UTC): inicio ceremonia y fin de la fiesta en el calendario. */
+const CAL_GOOGLE_DATES = "20260919T150000Z/20260919T220000Z"
+const CAL_OUTLOOK_START = "2026-09-19T15:00:00Z"
+const CAL_OUTLOOK_END = "2026-09-19T22:00:00Z"
+
+function buildGoogleCalendarUrl() {
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: CAL_EVENT_SUMMARY,
+    dates: CAL_GOOGLE_DATES,
+    details: CAL_EVENT_DESCRIPTION,
+    location: WEDDING_ICS_LOCATION,
+  })
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
+/** Outlook / Microsoft 365 en el navegador (abre pantalla de nuevo evento). */
+function buildOutlookWebCalendarUrl() {
+  const params = new URLSearchParams({
+    path: "/calendar/action/compose",
+    rru: "addevent",
+    subject: CAL_EVENT_SUMMARY,
+    body: CAL_EVENT_DESCRIPTION,
+    location: WEDDING_ICS_LOCATION,
+    startdt: CAL_OUTLOOK_START,
+    enddt: CAL_OUTLOOK_END,
+  })
+  return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`
+}
+
 function escapeIcsText(s) {
   return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n")
 }
@@ -86,8 +118,8 @@ function downloadWeddingCalendarReminder(pageOrigin) {
     `DTSTAMP:${nowStamp}`,
     "DTSTART:20260919T150000Z",
     "DTEND:20260919T220000Z",
-    `SUMMARY:${escapeIcsText("Boda Lis y Juanjo")}`,
-    `DESCRIPTION:${escapeIcsText(`Ceremonia y celebración (${WEDDING_ICS_LOCATION}). Confirma tu asistencia antes del 25 de junio de 2026.`)}`,
+    `SUMMARY:${escapeIcsText(CAL_EVENT_SUMMARY)}`,
+    `DESCRIPTION:${escapeIcsText(CAL_EVENT_DESCRIPTION)}`,
     `LOCATION:${escapeIcsText(WEDDING_ICS_LOCATION)}`,
     pageOrigin ? `URL:${pageOrigin}` : "",
     "END:VEVENT",
@@ -122,6 +154,64 @@ function IconoCalleLlegar({ className }) {
     >
       <path d="M12 21C8 17.4 4 13.3 4 9a8 8 0 0116 0c0 4.3-4 8.4-8 12z" />
       <circle cx="12" cy="9" r="2.25" />
+    </svg>
+  )
+}
+
+/** Marca Google (G) — pictograma compacto para el botón de calendario. */
+function IconCalendarGoogle({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden xmlns="http://www.w3.org/2000/svg">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
+    </svg>
+  )
+}
+
+/** Calendario / Outlook — marca sugerida en azul Microsoft. */
+function IconCalendarOutlook({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden xmlns="http://www.w3.org/2000/svg">
+      <path
+        fill="#0078D4"
+        d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
+      />
+      <path fill="#0078D4" fillOpacity="0.45" d="M7 12h4v4H7v-4zm6 0h4v4h-4v-4z" />
+    </svg>
+  )
+}
+
+/** Descarga archivo / Apple Calendar y otros (.ics). */
+function IconCalendarIcs({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect x="4" y="4" width="16" height="17" rx="2" />
+      <path d="M8 2v4M16 2v4M4 9h16" />
+      <path d="M12 14v6M12 17l2.5 2M12 17l-2.5 2" />
     </svg>
   )
 }
@@ -361,7 +451,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
     setRsvpFeedback({
       type: "ok",
-      text: "Se ha abierto WhatsApp con el mensaje listo; solo tienes que pulsar Enviar en el chat.",
+      text: "Se ha abierto el mensaje preparado; solo tienes que pulsar Enviar.",
     })
   }
 
@@ -712,46 +802,79 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             </p>
 
             {/* Cuenta atrás + recordatorio calendario */}
-            <div className="mb-10 w-full rounded-sm border-y border-[#e5d5c5]/60 py-8 sm:py-10 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
-              <p className="text-2xl sm:text-3xl md:text-4xl text-wine-dark mb-3 font-bold px-3 sm:px-4 text-center leading-tight font-serif">
+            <div className="mb-8 w-full rounded-sm border-y border-[#e5d5c5]/60 py-6 sm:py-7 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
+              <p className="text-2xl sm:text-3xl md:text-4xl text-wine-dark mb-2 font-bold px-3 sm:px-4 text-center leading-tight font-serif">
                 Confirma tu asistencia
               </p>
-              <p className="text-lg sm:text-xl md:text-2xl text-wine-dark mb-7 font-bold px-3 sm:px-4 text-center font-serif tracking-wide">
+              <p className="text-lg sm:text-xl md:text-2xl text-wine-dark mb-5 font-bold px-3 sm:px-4 text-center font-serif tracking-wide">
                 25 de junio de 2026
               </p>
-              <div className="flex justify-center gap-0.5 sm:gap-3 md:gap-6 font-serif px-0.5 sm:px-0">
+              <div className="flex justify-center gap-0.5 sm:gap-3 md:gap-5 px-0.5 sm:px-0">
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tabular-nums font-bold text-wine leading-none">{timeLeft.dias ?? 0}</span>
-                  <span className="text-xs sm:text-sm md:text-base uppercase tracking-widest text-wine-dark/70 mt-2 sm:mt-3 font-bold">Días</span>
+                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{timeLeft.dias ?? 0}</span>
+                  <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Días</span>
                 </div>
-                <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-light leading-none">:</span>
+                <span className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tabular-nums font-bold text-wine leading-none">{timeLeft.horas ?? 0}</span>
-                  <span className="text-xs sm:text-sm md:text-base uppercase tracking-widest text-wine-dark/70 mt-2 sm:mt-3 font-bold">Hrs</span>
+                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{timeLeft.horas ?? 0}</span>
+                  <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Hrs</span>
                 </div>
-                <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-light leading-none">:</span>
+                <span className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tabular-nums font-bold text-wine leading-none">{timeLeft.minutos ?? 0}</span>
-                  <span className="text-xs sm:text-sm md:text-base uppercase tracking-widest text-wine-dark/70 mt-2 sm:mt-3 font-bold">Min</span>
+                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{timeLeft.minutos ?? 0}</span>
+                  <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Min</span>
                 </div>
-                <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-light leading-none">:</span>
+                <span className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tabular-nums font-bold text-wine leading-none">{timeLeft.segundos ?? 0}</span>
-                  <span className="text-xs sm:text-sm md:text-base uppercase tracking-widest text-wine-dark/70 mt-2 sm:mt-3 font-bold">Seg</span>
+                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{timeLeft.segundos ?? 0}</span>
+                  <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Seg</span>
                 </div>
               </div>
-              <div className="mt-7 flex justify-center px-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    downloadWeddingCalendarReminder(
-                      typeof window !== "undefined" ? window.location.origin : "",
-                    )
-                  }
-                  className="rounded-sm border border-wine/70 bg-white/50 px-6 py-3 text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-wine shadow-sm transition-colors hover:bg-wine hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/40 focus-visible:ring-offset-2"
-                >
-                  Incluir recordatorio
-                </button>
+
+              <div className="mt-5 mx-auto max-w-xs border-t border-wine/10 pt-4 px-3">
+                <p className="text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.22em] text-wine-dark/75 mb-1">
+                  Poner recordatorio
+                </p>
+                <p className="text-center text-[10px] sm:text-[11px] text-wine-dark/55 font-serif italic mb-3">
+                  Elige tu aplicación
+                </p>
+                <div className="flex justify-center gap-2.5 sm:gap-3">
+                  <button
+                    type="button"
+                    aria-label="Añadir en Google Calendar"
+                    title="Google Calendar"
+                    onClick={() =>
+                      window.open(buildGoogleCalendarUrl(), "_blank", "noopener,noreferrer")
+                    }
+                    className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full border border-wine/30 bg-white/70 text-wine shadow-sm transition-colors hover:border-wine/55 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/35 focus-visible:ring-offset-2"
+                  >
+                    <IconCalendarGoogle className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Añadir en Outlook"
+                    title="Outlook"
+                    onClick={() =>
+                      window.open(buildOutlookWebCalendarUrl(), "_blank", "noopener,noreferrer")
+                    }
+                    className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full border border-wine/30 bg-white/70 shadow-sm transition-colors hover:border-wine/55 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/35 focus-visible:ring-offset-2"
+                  >
+                    <IconCalendarOutlook className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Descargar archivo de calendario (.ics)"
+                    title="Apple y otros (.ics)"
+                    onClick={() =>
+                      downloadWeddingCalendarReminder(
+                        typeof window !== "undefined" ? window.location.origin : "",
+                      )
+                    }
+                    className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full border border-wine/30 bg-white/70 text-wine-dark/85 shadow-sm transition-colors hover:border-wine/55 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/35 focus-visible:ring-offset-2"
+                  >
+                    <IconCalendarIcs className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -826,15 +949,15 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
               )}
 
               <p className="text-[11px] text-wine-dark/55 font-serif italic px-1">
-                La confirmación se envía por WhatsApp al +34 655 93 51 91 (se abrirá el chat con el mensaje ya redactado).
+                Al confirmar se abrirá un mensaje listo para enviarlo al +34 655 93 51 91.
               </p>
 
               <button
                 type="submit"
                 disabled={rsvpSubmitting}
-                className="mt-2 w-full bg-transparent border border-wine text-wine px-10 py-3.5 rounded-sm text-sm uppercase tracking-widest hover:bg-wine hover:text-cream transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none"
+                className="mt-2 w-full bg-wine text-cream px-10 py-3.5 rounded-sm text-sm uppercase tracking-widest shadow-md hover:bg-wine-dark hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/50 focus-visible:ring-offset-2"
               >
-                {rsvpSubmitting ? "Abriendo…" : "Confirmar por WhatsApp"}
+                {rsvpSubmitting ? "Abriendo…" : "Confirmar asistencia"}
               </button>
             </form>
           </FadeInSection>
