@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
-import { isRsvpConfigured, supabase } from "../lib/supabaseClient"
 import confetti from "canvas-confetti"
 
 /**
@@ -43,6 +42,70 @@ function getGuestStateFromUrl() {
 }
 
 const VENUE_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4hmsB7UvMiubGZLWA"
+
+/** WhatsApp en formato internacional sin + ni espacios (confirmaciones de asistencia). */
+const RSVP_WHATSAPP_PHONE = "34655935191"
+
+/** Cuenta atrás hasta un instante (epoch ms), estable en todos los navegadores. */
+function getTimeRemaining(targetMs) {
+  const diff = targetMs - Date.now()
+  if (!Number.isFinite(diff) || diff <= 0) {
+    return { dias: 0, horas: 0, minutos: 0, segundos: 0 }
+  }
+  return {
+    dias: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    horas: Math.floor((diff / (1000 * 60 * 60)) % 24),
+    minutos: Math.floor((diff / 1000 / 60) % 60),
+    segundos: Math.floor((diff / 1000) % 60),
+  }
+}
+
+/** Ceremonia: 19 sept 2026, 17:00 en España (CEST, UTC+2). */
+const WEDDING_CEREMONY_TARGET_MS = Date.UTC(2026, 8, 19, 15, 0, 0)
+
+const WEDDING_ICS_LOCATION = "La Batípuerta, Candelario, Salamanca"
+
+function escapeIcsText(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n")
+}
+
+function formatIcsUtcStamp(d) {
+  return d.toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z"
+}
+
+function downloadWeddingCalendarReminder(pageOrigin) {
+  const nowStamp = formatIcsUtcStamp(new Date())
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Lis y Juanjo//Invitacion//ES",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    "UID:boda-lis-juanjo-2026-09-19@invitacion-boda",
+    `DTSTAMP:${nowStamp}`,
+    "DTSTART:20260919T150000Z",
+    "DTEND:20260919T220000Z",
+    `SUMMARY:${escapeIcsText("Boda Lis y Juanjo")}`,
+    `DESCRIPTION:${escapeIcsText(`Ceremonia y celebración (${WEDDING_ICS_LOCATION}). Confirma tu asistencia antes del 25 de junio de 2026.`)}`,
+    `LOCATION:${escapeIcsText(WEDDING_ICS_LOCATION)}`,
+    pageOrigin ? `URL:${pageOrigin}` : "",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].filter(Boolean)
+  const ics = lines.join("\r\n")
+
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = "recordatorio-boda-lis-juanjo.ics"
+  a.rel = "noopener"
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
 
 function IconoCalleLlegar({ className }) {
   return (
@@ -157,7 +220,7 @@ function FadeInSection({ children, className = "", delay = "0ms", observerRoot =
 }
 
 function Invitation({ envelopeOpen, scrollContainerRef }) {
-  const [guestInfo] = useState(getGuestStateFromUrl)
+  const [guestInfo] = useState(() => getGuestStateFromUrl())
   const guestName = guestInfo.displayName
   const [showWelcomeBg, setShowWelcomeBg] = useState(false);
   const [showGuestName, setShowGuestName] = useState(false);
@@ -205,42 +268,22 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
   const [rsvpName, setRsvpName] = useState(() =>
     guestInfo.prefillRsvpName ? guestInfo.displayName : "",
   )
-  const [rsvpEmail, setRsvpEmail] = useState("")
-  const [rsvpPlusOne, setRsvpPlusOne] = useState(() => guestInfo.plusOne ?? false)
+  const [rsvpComments, setRsvpComments] = useState(() =>
+    guestInfo.prefillRsvpName ? "Sin alergías ni observaciones." : "",
+  )
+  const [rsvpPlusOne, setRsvpPlusOne] = useState(() => guestInfo.plusOne === true)
   const [rsvpSubmitting, setRsvpSubmitting] = useState(false)
   const [rsvpFeedback, setRsvpFeedback] = useState(null) // { type: 'ok' | 'err', text: string }
 
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
-
-  function calculateTimeLeft() {
-    // Fecha límite para el RSVP o para la boda: Abril de 2026. Usamos 1 de abril.
-    const targetDate = new Date("2026-04-01T23:59:59").getTime();
-    const now = new Date().getTime();
-    const difference = targetDate - now;
-
-    let timeLeftResult = {};
-
-    if (difference > 0) {
-      timeLeftResult = {
-        dias: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        horas: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutos: Math.floor((difference / 1000 / 60) % 60),
-        segundos: Math.floor((difference / 1000) % 60),
-      };
-    } else {
-      timeLeftResult = { dias: 0, horas: 0, minutos: 0, segundos: 0 };
-    }
-
-    return timeLeftResult;
-  }
+  const [timeLeft, setTimeLeft] = useState(() => getTimeRemaining(WEDDING_CEREMONY_TARGET_MS))
 
   useEffect(() => {
+    setTimeLeft(getTimeRemaining(WEDDING_CEREMONY_TARGET_MS))
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+      setTimeLeft(getTimeRemaining(WEDDING_CEREMONY_TARGET_MS))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     // Cuando el sobre ya está abierto, revelamos secuencialmente los mensajes y la tarjeta
@@ -289,43 +332,37 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
     })
   }, [scrollContainerToTop])
 
-  async function handleRsvpSubmit(e) {
+  function handleRsvpSubmit(e) {
     e.preventDefault()
     setRsvpFeedback(null)
 
-    if (!isRsvpConfigured() || !supabase) {
-      setRsvpFeedback({
-        type: "err",
-        text: "Falta la clave de API: crea un archivo .env con VITE_SUPABASE_ANON_KEY (y ejecuta el SQL de supabase/rsvp_setup.sql).",
-      })
+    const fullName = rsvpName.trim()
+    if (!fullName) {
+      setRsvpFeedback({ type: "err", text: "Indica nombre y apellidos para confirmar." })
       return
     }
 
-    const full_name = rsvpName.trim()
-    const email = rsvpEmail.trim().toLowerCase()
-    if (!full_name || !email) return
+    const comments = rsvpComments.trim()
+
+    const lines = [
+      "Hola, confirmo mi asistencia a la boda de Lis y Juanjo.",
+      "",
+      `Nombre: ${fullName}`,
+      rsvpPlusOne ? "Con acompañante (+1)." : "Voy solo/a.",
+    ]
+    if (comments) lines.push("", "Alergias u observaciones:", comments)
+    const text = lines.join("\n")
+
+    const url = `https://wa.me/${RSVP_WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`
+    window.open(url, "_blank", "noopener,noreferrer")
 
     setRsvpSubmitting(true)
-    const { error } = await supabase.from("rsvp").insert({
-      full_name,
-      email,
-      plus_one: rsvpPlusOne,
+    window.setTimeout(() => setRsvpSubmitting(false), 800)
+
+    setRsvpFeedback({
+      type: "ok",
+      text: "Se ha abierto WhatsApp con el mensaje listo; solo tienes que pulsar Enviar en el chat.",
     })
-    setRsvpSubmitting(false)
-
-    if (error) {
-      setRsvpFeedback({
-        type: "err",
-        text:
-          error.message || "No se pudo enviar. Revisa la conexión o la configuración de Supabase.",
-      })
-      return
-    }
-
-    setRsvpFeedback({ type: "ok", text: "Confirmación recibida. ¡Gracias!" })
-    setRsvpName("")
-    setRsvpEmail("")
-    setRsvpPlusOne(false)
   }
 
   useLayoutEffect(() => {
@@ -397,7 +434,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 <div className="relative w-fit max-w-full mx-auto overflow-hidden rounded-[2px] border border-[#e3d5c7] bg-[#faf8f5] shadow-[0_4px_18px_rgba(62,42,42,0.08),inset_0_0_0_1px_rgba(255,255,255,0.4)]">
                   <div className="relative w-full">
                     <img
-                      src="/boda/nos-casamos.png"
+                      src="/boda/Nos%20casamos.jpeg"
                       alt="Lis y Juanjo — Nos casamos"
                       fetchPriority="high"
                       decoding="async"
@@ -405,6 +442,11 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                       onError={onHeroImageSettled}
                       className="mx-auto block h-auto w-full max-w-full max-h-[min(58svh,620px)] object-contain object-center transition-transform duration-[1000ms] ease-out motion-safe:hover:scale-[1.02]"
                     />
+                    <div className="pointer-events-none absolute inset-0 z-[2] flex justify-center px-4 pt-[10%] sm:pt-[12%] md:pt-[14%]">
+                      <p className="text-center font-serif font-bold italic tracking-[0.1em] text-wine-dark drop-shadow-[0_2px_20px_rgba(255,255,255,0.98)] sm:tracking-[0.14em] md:tracking-[0.16em] text-[clamp(2.35rem,9vw,4.25rem)] sm:text-[clamp(2.5rem,10vw,4.75rem)]">
+                        ¡NOS CASAMOS!
+                      </p>
+                    </div>
                     <div
                       className="pointer-events-none absolute inset-0 z-[1] shadow-[inset_0_0_24px_rgba(71,20,33,0.04)]"
                       aria-hidden
@@ -472,8 +514,8 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
             <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
               <img
-                src="/boda/historia-sacrificio.png"
-                alt="Esa certeza tranquila"
+                src="/boda/encuentro.png"
+                alt="Encuentro"
                 loading="lazy"
                 decoding="async"
                 className="w-full h-auto object-cover"
@@ -496,8 +538,8 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
             <div className="w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
               <img
-                src="/boda/historia-distancia.png"
-                alt="La distancia"
+                src="/boda/distancia.png"
+                alt="Distancia"
                 loading="lazy"
                 decoding="async"
                 className="w-full h-auto object-cover"
@@ -662,37 +704,54 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
           <FadeInSection className="w-full mb-16" delay="700ms">
             <SectionTitleWithOrnament>Confirmación</SectionTitleWithOrnament>
             
-            <p className="text-sm text-wine-dark/80 mb-6 font-serif italic px-4 max-w-sm mx-auto">
-              Te agradeceríamos que confirmaras antes de abril de 2026.
+            <p className="text-sm sm:text-base text-wine-dark/80 mb-6 font-serif italic px-4 max-w-sm mx-auto leading-relaxed">
+              Te agradeceríamos que confirmaras antes del{" "}
+              <strong className="font-bold not-italic text-wine-dark">25 de junio de 2026</strong>.
               <br /><br />
               Si tienes alguna alergia o intolerancia, cuéntanoslo al confirmar asistencia. Queremos que todo esté perfecto para ti.
             </p>
 
-            {/* COUNTDOWN — mismo ancho que el contenido de la tarjeta (sin sangrar fuera del padding) */}
-            <div className="mb-10 w-full rounded-sm border-y border-[#e5d5c5]/60 py-8 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
-              <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-wine-dark/80 mb-5 font-medium px-2 sm:px-0 text-center">
-                {guestName !== "Invitado" ? `${guestName.split(" ")[0]}, confirma antes de abril de 2026` : "Confirma antes de abril de 2026"}
+            {/* Cuenta atrás + recordatorio calendario */}
+            <div className="mb-10 w-full rounded-sm border-y border-[#e5d5c5]/60 py-8 sm:py-10 bg-[#e5d5c5]/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.4)]">
+              <p className="text-2xl sm:text-3xl md:text-4xl text-wine-dark mb-3 font-bold px-3 sm:px-4 text-center leading-tight font-serif">
+                Confirma tu asistencia
               </p>
-              <div className="flex justify-center gap-2 sm:gap-6 font-serif px-2 sm:px-0">
+              <p className="text-lg sm:text-xl md:text-2xl text-wine-dark mb-7 font-bold px-3 sm:px-4 text-center font-serif tracking-wide">
+                25 de junio de 2026
+              </p>
+              <div className="flex justify-center gap-0.5 sm:gap-3 md:gap-6 font-serif px-0.5 sm:px-0">
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-2xl sm:text-4xl tabular-nums text-wine">{timeLeft.dias || '0'}</span>
-                  <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Días</span>
+                  <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tabular-nums font-bold text-wine leading-none">{timeLeft.dias ?? 0}</span>
+                  <span className="text-xs sm:text-sm md:text-base uppercase tracking-widest text-wine-dark/70 mt-2 sm:mt-3 font-bold">Días</span>
                 </div>
-                <span className="text-xl sm:text-4xl text-wine/30 mt-1 shrink-0">:</span>
+                <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-light leading-none">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-2xl sm:text-4xl tabular-nums text-wine">{timeLeft.horas || '0'}</span>
-                  <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Hrs</span>
+                  <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tabular-nums font-bold text-wine leading-none">{timeLeft.horas ?? 0}</span>
+                  <span className="text-xs sm:text-sm md:text-base uppercase tracking-widest text-wine-dark/70 mt-2 sm:mt-3 font-bold">Hrs</span>
                 </div>
-                <span className="text-xl sm:text-4xl text-wine/30 mt-1 shrink-0">:</span>
+                <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-light leading-none">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-2xl sm:text-4xl tabular-nums text-wine">{timeLeft.minutos || '0'}</span>
-                  <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Min</span>
+                  <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tabular-nums font-bold text-wine leading-none">{timeLeft.minutos ?? 0}</span>
+                  <span className="text-xs sm:text-sm md:text-base uppercase tracking-widest text-wine-dark/70 mt-2 sm:mt-3 font-bold">Min</span>
                 </div>
-                <span className="text-xl sm:text-4xl text-wine/30 mt-1 shrink-0">:</span>
+                <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-light leading-none">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-2xl sm:text-4xl tabular-nums text-wine">{timeLeft.segundos || '0'}</span>
-                  <span className="text-[10px] sm:text-xs uppercase tracking-widest text-wine-dark/60 mt-1">Seg</span>
+                  <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tabular-nums font-bold text-wine leading-none">{timeLeft.segundos ?? 0}</span>
+                  <span className="text-xs sm:text-sm md:text-base uppercase tracking-widest text-wine-dark/70 mt-2 sm:mt-3 font-bold">Seg</span>
                 </div>
+              </div>
+              <div className="mt-7 flex justify-center px-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadWeddingCalendarReminder(
+                      typeof window !== "undefined" ? window.location.origin : "",
+                    )
+                  }
+                  className="rounded-sm border border-wine/70 bg-white/50 px-6 py-3 text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-wine shadow-sm transition-colors hover:bg-wine hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/40 focus-visible:ring-offset-2"
+                >
+                  Incluir recordatorio
+                </button>
               </div>
             </div>
 
@@ -714,7 +773,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                   onChange={e => setRsvpName(e.target.value)}
                   autoComplete="name"
                   className="w-full border-b-[1.5px] border-wine/30 bg-transparent py-2 px-1 text-wine-dark focus:outline-none focus:border-wine transition-colors placeholder:text-wine/30 font-serif italic"
-                  placeholder="Escribe tu nombre y apellidos"
+                  placeholder={guestInfo.prefillRsvpName ? "" : "Escribe tu nombre y apellidos"}
                   required
                 />
               </div>
@@ -722,17 +781,17 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
               <div className="flex flex-col text-left">
                 <label
                   className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium"
-                  htmlFor="rsvp-email"
+                  htmlFor="rsvp-comments"
                 >
                   Alergias o comentarios
                 </label>
                 <input
-                  id="rsvp-email"
+                  id="rsvp-comments"
                   type="text"
-                  value={rsvpEmail}
-                  onChange={e => setRsvpEmail(e.target.value)}
+                  value={rsvpComments}
+                  onChange={e => setRsvpComments(e.target.value)}
                   className="w-full border-b-[1.5px] border-wine/30 bg-transparent py-2 px-1 text-wine-dark focus:outline-none focus:border-wine transition-colors placeholder:text-wine/30 font-serif italic"
-                  placeholder="Ej: Soy celíaco, etc."
+                  placeholder="Ej: Soy celíaco, etc. (opcional)"
                 />
               </div>
 
@@ -750,7 +809,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                     </div>
                   </div>
                   <span className="text-sm font-serif italic text-wine-dark/80 group-hover:text-wine transition-colors cursor-pointer">
-                    Voy con un acompañante
+                    Voy con un acompañante (+1)
                   </span>
                 </label>
               )}
@@ -766,12 +825,16 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 </p>
               )}
 
+              <p className="text-[11px] text-wine-dark/55 font-serif italic px-1">
+                La confirmación se envía por WhatsApp al +34 655 93 51 91 (se abrirá el chat con el mensaje ya redactado).
+              </p>
+
               <button
                 type="submit"
                 disabled={rsvpSubmitting}
                 className="mt-2 w-full bg-transparent border border-wine text-wine px-10 py-3.5 rounded-sm text-sm uppercase tracking-widest hover:bg-wine hover:text-cream transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none"
               >
-                {rsvpSubmitting ? "Enviando…" : "Confirmar Asistencia"}
+                {rsvpSubmitting ? "Abriendo…" : "Confirmar por WhatsApp"}
               </button>
             </form>
           </FadeInSection>
