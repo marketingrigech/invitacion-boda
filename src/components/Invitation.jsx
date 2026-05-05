@@ -524,7 +524,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 <div className="relative w-fit max-w-full mx-auto overflow-hidden rounded-[2px] border border-[#e3d5c7] bg-[#faf8f5] shadow-[0_4px_18px_rgba(62,42,42,0.08),inset_0_0_0_1px_rgba(255,255,255,0.4)]">
                   <div className="relative w-full">
                     <img
-                      src="/boda/Nos%20casamos.jpeg"
+                      src="/boda/Nos-casamos.jpg"
                       alt="Lis y Juanjo — Nos casamos"
                       fetchPriority="high"
                       decoding="async"
