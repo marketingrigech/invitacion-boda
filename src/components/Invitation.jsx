@@ -75,9 +75,6 @@ const VENUE_FINCA_CAROUSEL_URLS = (() => {
   return [portada, ...names].map(n => `/boda/Finca/${encodeURIComponent(n)}`)
 })()
 
-/** Portada «Cómo nos conocimos» — WhatsApp … 12.14.33 (11).jpeg */
-const CONOCIMOS_PORTADA_URL = FINCA_IMAGE_URLS[15]
-
 /** WhatsApp en formato internacional sin + ni espacios (confirmaciones de asistencia). */
 const RSVP_WHATSAPP_PHONE = "34655935191"
 
@@ -340,7 +337,9 @@ function VenueFincaCarousel() {
       <ImageLightbox
         isOpen={viewerOpen}
         onClose={() => setViewerOpen(false)}
-        src={urls[index]}
+        images={urls}
+        index={index}
+        onIndexChange={setIndex}
         alt={`La Batípuerta, Candelario — foto ${index + 1} de ${total}`}
       />
     </div>
@@ -693,25 +692,8 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
           {/* SECCIÓN NUESTRA HISTORIA 1: CÓMO NOS CONOCIMOS */}
           <FadeInSection className="w-full mb-20" delay="300ms">
-            <div className="mb-8 w-[calc(100%+24px)] md:w-full -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
-              <button
-                type="button"
-                onClick={() => setConocimosLightboxOpen(true)}
-                className="group relative block max-h-[min(72svh,560px)] w-full cursor-zoom-in overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/50 focus-visible:ring-offset-2"
-                aria-label="Ampliar foto de Cómo nos conocimos"
-              >
-                <img
-                  src={CONOCIMOS_PORTADA_URL}
-                  alt=""
-                  fetchPriority="low"
-                  decoding="async"
-                  className="h-full max-h-[min(72svh,560px)] w-full object-cover object-center transition-opacity duration-300 group-hover:opacity-95"
-                />
-              </button>
-            </div>
-
             <SectionTitleWithOrnament>Cómo nos conocimos</SectionTitleWithOrnament>
-            <div className="max-w-md mx-auto mb-10 px-4">
+            <div className="max-w-md mx-auto mb-8 px-4">
               <p className="text-base sm:text-lg text-neutral-600 font-serif font-light italic leading-relaxed tracking-wide antialiased [text-rendering:optimizeLegibility]">
                 Nos conocimos en una boda.
                 <br /><br />
@@ -721,6 +703,23 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 Entre todas las conversaciones.<br />
                 Nos elegimos.
               </p>
+            </div>
+
+            <div className="w-[calc(100%+24px)] md:w-full max-w-md mx-auto -mx-3 md:mx-0 overflow-hidden rounded-sm shadow-lg border-[6px] border-white outline outline-[1px] outline-black/5">
+              <button
+                type="button"
+                onClick={() => setConocimosLightboxOpen(true)}
+                className="group relative block w-full cursor-zoom-in overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/50 focus-visible:ring-offset-2"
+                aria-label="Ampliar foto de Praga"
+              >
+                <img
+                  src="/boda/historia-praga.png"
+                  alt="Praga — cómo nos conocimos"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-auto max-h-[min(65svh,480px)] object-cover object-center transition-opacity duration-300 group-hover:opacity-95 sm:max-h-[520px]"
+                />
+              </button>
             </div>
           </FadeInSection>
 
@@ -1115,8 +1114,8 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
       <ImageLightbox
         isOpen={conocimosLightboxOpen}
         onClose={() => setConocimosLightboxOpen(false)}
-        src={CONOCIMOS_PORTADA_URL}
-        alt="Cómo nos conocimos — Lis y Juanjo"
+        src="/boda/historia-praga.png"
+        alt="Praga — cómo nos conocimos Lis y Juanjo"
       />
     </div>
   )
