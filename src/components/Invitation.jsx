@@ -353,6 +353,32 @@ function VenueFincaCarousel() {
           {index + 1} · {total}
         </p>
       ) : null}
+      <div
+        className="mt-3 grid w-full max-w-md grid-cols-4 gap-1 px-0 sm:gap-2 sm:px-0.5"
+        aria-label="Cuatro fotitos del espacio de celebración"
+      >
+        {urls.slice(0, 4).map((src, i) => (
+          <button
+            key={src}
+            type="button"
+            onClick={() => setIndex(i)}
+            className={`overflow-hidden rounded-sm border-2 border-white shadow-[0_2px_8px_rgba(62,42,42,0.1)] outline outline-[0.5px] outline-black/5 transition-opacity sm:border-[3px] ${
+              index === i ? "ring-2 ring-wine/50 ring-offset-1" : "opacity-90 hover:opacity-100"
+            }`}
+            aria-label={`Ver foto ${i + 1} en grande`}
+            aria-current={index === i ? "true" : undefined}
+          >
+            <img
+              src={src}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+              className="aspect-square w-full object-cover object-center"
+            />
+          </button>
+        ))}
+      </div>
       <ImageLightbox
         isOpen={viewerOpen}
         onClose={() => setViewerOpen(false)}
@@ -1055,26 +1081,7 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
                   Un adelanto de La Batipuerta · Candelario (Salamanca)
                 </p>
                 <div className={`mt-3 ${fotoMarcoInvitacion}`}>
-                </div>
-                <div
-                  className="mt-3 grid w-full max-w-md grid-cols-4 gap-1 px-0 sm:gap-2 sm:px-0.5"
-                  aria-label="Cuatro fotitos del espacio de celebración"
-                >
-                  {VENUE_FINCA_CAROUSEL_URLS.slice(0, 4).map((src, i) => (
-                    <div
-                      key={src}
-                      className="overflow-hidden rounded-sm border-2 border-white shadow-[0_2px_8px_rgba(62,42,42,0.1)] outline outline-[0.5px] outline-black/5 sm:border-[3px]"
-                    >
-                      <img
-                        src={src}
-                        alt={`La Batipuerta, espacio celebración — adelanto ${i + 1} de 4`}
-                        loading="lazy"
-                        decoding="async"
-                        draggable={false}
-                        className="aspect-square w-full object-cover object-center"
-                      />
-                    </div>
-                  ))}
+                  <VenueFincaCarousel />
                 </div>
               </div>
             </div>
