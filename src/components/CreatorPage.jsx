@@ -135,6 +135,26 @@ function IconCheck({ className }) {
   )
 }
 
+/** Pipeline: no asiste / declinado */
+function IconDeclined({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M15 9l-6 6M9 9l6 6" />
+    </svg>
+  )
+}
+
 function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, totalClicks: 0, totalConfirms: 0 } }) {
   const total = stats.total || 0
   const pct = (n) => (total > 0 ? Math.round((n / total) * 100) : 0)
@@ -421,6 +441,7 @@ function InviteRow({
   onCycleStatus,
   onToggleLinkSent,
   onToggleConfirmedShortcut,
+  onToggleDeclinedShortcut,
   onTogglePlusOne,
   onRemove,
 }) {
@@ -493,6 +514,19 @@ function InviteRow({
           >
             <IconCheck className="h-4 w-4" />
           </button>
+          <button
+            type="button"
+            onClick={() => onToggleDeclinedShortcut(row.id)}
+            className={`${pipelineBtn} ${
+              row.status === "declined"
+                ? "border-red-700/50 bg-red-100 text-red-900"
+                : "border-sand text-wine/35"
+            }`}
+            title="No asiste / quitar declinado"
+            aria-pressed={row.status === "declined"}
+          >
+            <IconDeclined className="h-4 w-4" />
+          </button>
         </div>
       </td>
       <td className="px-2 py-2 align-middle min-w-[120px]">
@@ -557,6 +591,7 @@ function InviteMobileCard({
   onCycleStatus,
   onToggleLinkSent,
   onToggleConfirmedShortcut,
+  onToggleDeclinedShortcut,
   onTogglePlusOne,
   onRemove,
 }) {
@@ -638,6 +673,19 @@ function InviteMobileCard({
           >
             <IconCheck className="h-4 w-4" />
           </button>
+          <button
+            type="button"
+            onClick={() => onToggleDeclinedShortcut(row.id)}
+            className={`${pipelineBtn} ${
+              row.status === "declined"
+                ? "border-red-700/50 bg-red-100 text-red-900"
+                : "border-sand text-wine/35"
+            }`}
+            title="No asiste / quitar declinado"
+            aria-pressed={row.status === "declined"}
+          >
+            <IconDeclined className="h-4 w-4" />
+          </button>
         </div>
         <button
           type="button"
@@ -690,6 +738,7 @@ function InviteList({
   onCycleStatus,
   onToggleLinkSent,
   onToggleConfirmedShortcut,
+  onToggleDeclinedShortcut,
   onTogglePlusOne,
   onRemove,
 }) {
@@ -747,6 +796,7 @@ function InviteList({
                 onCycleStatus={onCycleStatus}
                 onToggleLinkSent={onToggleLinkSent}
                 onToggleConfirmedShortcut={onToggleConfirmedShortcut}
+                onToggleDeclinedShortcut={onToggleDeclinedShortcut}
                 onTogglePlusOne={onTogglePlusOne}
                 onRemove={onRemove}
               />
@@ -783,6 +833,7 @@ function InviteList({
                   onCycleStatus={onCycleStatus}
                   onToggleLinkSent={onToggleLinkSent}
                   onToggleConfirmedShortcut={onToggleConfirmedShortcut}
+                  onToggleDeclinedShortcut={onToggleDeclinedShortcut}
                   onTogglePlusOne={onTogglePlusOne}
                   onRemove={onRemove}
                 />
@@ -879,6 +930,12 @@ export default function CreatorPage() {
     updateStatus(id, row.status === "confirmed" ? "pending" : "confirmed")
   }
 
+  const toggleDeclinedShortcut = (id) => {
+    const row = invitations.find((i) => i.id === id)
+    if (!row) return
+    updateStatus(id, row.status === "declined" ? "pending" : "declined")
+  }
+
   return (
     <div className="relative z-10 flex min-h-[100dvh] w-full flex-1 flex-col overflow-x-hidden overflow-y-auto bg-cream text-wine-dark">
       <div className="mx-auto max-w-5xl px-3 py-5 pb-20 sm:px-4 sm:py-6 sm:pb-16">
@@ -926,6 +983,7 @@ export default function CreatorPage() {
             onCycleStatus={cycleStatus}
             onToggleLinkSent={toggleLinkSent}
             onToggleConfirmedShortcut={toggleConfirmedShortcut}
+            onToggleDeclinedShortcut={toggleDeclinedShortcut}
             onTogglePlusOne={togglePlusOne}
             onRemove={removeInvitation}
           />
