@@ -28,6 +28,7 @@ body {
 body {
   overflow: hidden;
   font-family: 'Montserrat', sans-serif;
+  font-size: 1.0625rem;
   color: #471421;
   /* text-wine-dark */
   background-color: #EFEBE8;
