@@ -34,6 +34,17 @@ function trackOncePerSession(storageKey, slug, event) {
   trackEvent(slug, event)
 }
 
+/** Throttle simple: ejecuta fn como máximo una vez cada `ms` milisegundos. */
+function throttle(fn, ms) {
+  let last = 0
+  return (...args) => {
+    const now = Date.now()
+    if (now - last < ms) return
+    last = now
+    fn(...args)
+  }
+}
+
 /** Flujo sobre + invitación (contenido original de App). */
 export default function InvitationRoute() {
   const [isReady, setIsReady] = useState(false)
@@ -41,6 +52,7 @@ export default function InvitationRoute() {
   const [envelopeUnmounted, setEnvelopeUnmounted] = useState(false)
   const sceneRef = useRef(null)
   const slugRef = useRef(null)
+  const trackClickRef = useRef(null)
 
   useEffect(() => {
     slugRef.current = extractSlugFromLocation()
@@ -48,6 +60,16 @@ export default function InvitationRoute() {
       trackOncePerSession(`kv_tracked_view_${slugRef.current}`, slugRef.current, "view")
     }
   }, [])
+
+  useEffect(() => {
+    const slug = slugRef.current ?? extractSlugFromLocation()
+    if (!slug) return
+    const handler = throttle(() => trackEvent(slug, "click"), 1500)
+    trackClickRef.current = handler
+    const el = sceneRef.current
+    if (el) el.addEventListener("click", handler)
+    return () => { if (el) el.removeEventListener("click", handler) }
+  }, [isReady])
 
   useEffect(() => {
     const timer = setTimeout(() => setIsReady(true), 500)
@@ -83,6 +105,11 @@ export default function InvitationRoute() {
     setEnvelopeOpen(true)
   }
 
+  const handleTrackConfirm = () => {
+    const slug = slugRef.current ?? extractSlugFromLocation()
+    if (slug) trackEvent(slug, "confirm")
+  }
+
   return (
     <div
       ref={sceneRef}
@@ -104,7 +131,7 @@ export default function InvitationRoute() {
       )}
 
       <div className="relative z-20">
-        <Invitation envelopeOpen={envelopeOpen} scrollContainerRef={sceneRef} />
+        <Invitation envelopeOpen={envelopeOpen} scrollContainerRef={sceneRef} onTrackConfirm={handleTrackConfirm} />
       </div>
     </div>
   )

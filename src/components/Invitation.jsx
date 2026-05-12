@@ -464,7 +464,7 @@ function FadeInSection({ children, className = "", delay = "0ms", observerRoot =
   )
 }
 
-function Invitation({ envelopeOpen, scrollContainerRef }) {
+function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
   const [guestInfo] = useState(() => getGuestStateFromUrl())
   const guestName = guestInfo.displayName
   const [showWelcomeBg, setShowWelcomeBg] = useState(false);
@@ -1274,6 +1274,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
               <button
                 type="submit"
                 disabled={rsvpSubmitting}
+                onClick={() => onTrackConfirm?.()}
                 className="mt-2 w-full bg-wine text-cream px-10 py-3.5 rounded-sm text-sm uppercase tracking-widest shadow-md hover:bg-wine-dark hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/50 focus-visible:ring-offset-2"
               >
                 {rsvpSubmitting ? "Abriendo…" : "Confirmar asistencia"}

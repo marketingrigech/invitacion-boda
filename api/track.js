@@ -27,16 +27,19 @@ export default async function handler(req, res) {
     res.status(400).json({ ok: false, error: "slug" })
     return
   }
-  if (!event || !["view", "open"].includes(event)) {
+  const ALLOWED_EVENTS = ["view", "open", "click", "confirm"]
+  if (!event || !ALLOWED_EVENTS.includes(event)) {
     res.status(400).json({ ok: false, error: "event" })
     return
   }
 
   try {
     const key = `inv:${slug}`
-    const field = event === "view" ? "views" : "opens"
+    const fieldMap = { view: "views", open: "opens", click: "clicks", confirm: "confirms" }
+    const lastMap = { view: "last_view", open: "last_open", click: "last_click", confirm: "last_confirm" }
+    const field = fieldMap[event]
+    const lastField = lastMap[event]
     const now = new Date().toISOString()
-    const lastField = event === "view" ? "last_view" : "last_open"
 
     await kv.hincrby(key, field, 1)
     await kv.hset(key, { [lastField]: now })
