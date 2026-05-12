@@ -29,25 +29,6 @@ function formatTimeAgo(iso) {
   return `hace ${days} día${days !== 1 ? "s" : ""}`
 }
 
-function IconEnvelope({ className }) {
-  return (
-    <svg
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="M22 8l-10 6L2 8" />
-    </svg>
-  )
-}
-
 function IconEye({ className }) {
   return (
     <svg
@@ -63,24 +44,6 @@ function IconEye({ className }) {
     >
       <path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z" />
       <circle cx="12" cy="12" r="3" />
-    </svg>
-  )
-}
-
-function IconCheck({ className }) {
-  return (
-    <svg
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M20 6L9 17l-5-5" />
     </svg>
   )
 }
@@ -135,39 +98,86 @@ function IconTrash({ className }) {
   )
 }
 
+function IconEnvelope({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M4 4h16v16H4z" />
+      <path d="M4 8l8 5 8-5" />
+    </svg>
+  )
+}
+
+function IconCheck({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  )
+}
+
 function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, totalClicks: 0, totalConfirms: 0 } }) {
   const total = stats.total || 0
   const pct = (n) => (total > 0 ? Math.round((n / total) * 100) : 0)
   const funnelSteps = [
     { label: "Creados", count: stats.total, hint: "100% base" },
-    { label: "Enviados", count: stats.sent, hint: "Enlace enviado" },
-    { label: "Vistos", count: stats.seen, hint: "Abrieron invitación" },
+    { label: "Enviados", count: stats.enviados, hint: "Enlace enviado (CRM)" },
     { label: "Confirmados", count: stats.confirmed, hint: "RSVP sí" },
+    { label: "No asisten", count: stats.declined, hint: "Declinado" },
   ]
+
+  /** Números grandes del panel: Arial para legibilidad */
+  const nLg = "font-[Arial,Helvetica,sans-serif] text-3xl font-semibold tabular-nums leading-none"
+  const nFunnel = "font-[Arial,Helvetica,sans-serif] text-lg font-semibold tabular-nums leading-none text-wine-dark"
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
-          <p className="font-serif text-3xl font-medium text-wine-dark">{stats.total}</p>
+          <p className={`${nLg} text-wine-dark`}>{stats.total}</p>
           <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
-            Total invitados
+            Total
           </p>
         </div>
         <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
-          <p className="font-serif text-3xl font-medium text-emerald-800">{stats.confirmed}</p>
+          <p className={`${nLg} text-amber-800`}>{stats.pending}</p>
+          <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
+            Sin enviar
+          </p>
+        </div>
+        <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
+          <p className={`${nLg} text-sky-900`}>{stats.sent}</p>
+          <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
+            Enviado
+          </p>
+        </div>
+        <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
+          <p className={`${nLg} text-emerald-800`}>{stats.confirmed}</p>
           <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
             Confirmados
           </p>
         </div>
-        <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
-          <p className="font-serif text-3xl font-medium text-amber-800">{stats.pending}</p>
-          <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
-            Pendiente
-          </p>
-        </div>
-        <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
-          <p className="font-serif text-3xl font-medium text-red-800">{stats.declined}</p>
+        <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm lg:col-span-1 col-span-2 lg:col-auto">
+          <p className={`${nLg} text-red-800`}>{stats.declined}</p>
           <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
             No asisten
           </p>
@@ -178,7 +188,7 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
         <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
           <div className="flex items-center gap-1.5">
             <IconEye className="h-4 w-4 text-sky-700 shrink-0" />
-            <p className="font-serif text-3xl font-medium text-sky-900">{kvTotals.totalViews}</p>
+            <p className={`${nLg} text-sky-900`}>{kvTotals.totalViews}</p>
           </div>
           <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
             Vistas (tiempo real)
@@ -187,7 +197,7 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
         <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
           <div className="flex items-center gap-1.5">
             <IconCursor className="h-4 w-4 text-violet-700 shrink-0" />
-            <p className="font-serif text-3xl font-medium text-violet-900">{kvTotals.totalClicks}</p>
+            <p className={`${nLg} text-violet-900`}>{kvTotals.totalClicks}</p>
           </div>
           <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
             Clicks totales
@@ -196,7 +206,7 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
         <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
           <div className="flex items-center gap-1.5">
             <IconHeart className="h-4 w-4 text-rose-500 shrink-0" />
-            <p className="font-serif text-3xl font-medium text-rose-800">{kvTotals.totalConfirms}</p>
+            <p className={`${nLg} text-rose-800`}>{kvTotals.totalConfirms}</p>
           </div>
           <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
             Botón confirmar
@@ -218,11 +228,13 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
                   title={`${s.label}: ${s.count}`}
                 />
               </div>
-              <p className="mt-2 text-center font-serif text-lg text-wine-dark">{s.count}</p>
+              <p className={`mt-2 text-center ${nFunnel}`}>{s.count}</p>
               <p className="text-center text-[10px] font-sans font-semibold uppercase tracking-wide text-wine/80">
                 {s.label}
               </p>
-              <p className="text-center text-[10px] text-wine/60">{pct(s.count)}%</p>
+              <p className="text-center font-[Arial,Helvetica,sans-serif] text-[10px] tabular-nums text-wine/60">
+                {pct(s.count)}%
+              </p>
             </div>
           ))}
         </div>
@@ -378,6 +390,8 @@ function InviteBanner({ invitation, onDismiss }) {
 
 function statusLabel(status) {
   switch (status) {
+    case "sent":
+      return "Enviado"
     case "confirmed":
       return "Confirmado"
     case "declined":
@@ -389,6 +403,8 @@ function statusLabel(status) {
 
 function statusPillClass(status) {
   switch (status) {
+    case "sent":
+      return "bg-sky-100 text-sky-900 border-sky-700/40"
     case "confirmed":
       return "bg-emerald-100 text-emerald-900 border-emerald-700/40"
     case "declined":
@@ -402,10 +418,9 @@ function InviteRow({
   row,
   kvRow,
   onCycleStatus,
+  onToggleLinkSent,
   onToggleConfirmedShortcut,
   onTogglePlusOne,
-  onToggleLinkSent,
-  onToggleSeen,
   onRemove,
 }) {
   const path = invitePath(row.slug, row.plusOne)
@@ -427,6 +442,7 @@ function InviteRow({
 
   const pipelineBtn =
     "inline-flex h-9 w-9 items-center justify-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-wine/40"
+  const linkSentActive = ["sent", "confirmed", "declined"].includes(row.status)
 
   return (
     <tr className="border-b border-sand/60 hover:bg-cream/50">
@@ -445,7 +461,7 @@ function InviteRow({
           type="button"
           onClick={() => onCycleStatus(row.id)}
           className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusPillClass(row.status)}`}
-          title="Clic para cambiar: pendiente → confirmado → no asiste"
+          title="Clic para avanzar: pendiente → enviado → confirmado → no asiste"
         >
           {statusLabel(row.status)}
         </button>
@@ -456,23 +472,12 @@ function InviteRow({
             type="button"
             onClick={() => onToggleLinkSent(row.id)}
             className={`${pipelineBtn} ${
-              row.linkSent ? "border-wine bg-wine/10 text-wine" : "border-sand text-wine/35"
+              linkSentActive ? "border-wine bg-wine/10 text-wine" : "border-sand text-wine/35"
             }`}
-            title="Enlace enviado"
-            aria-pressed={row.linkSent}
+            title="Enlace enviado (pendiente ↔ enviado)"
+            aria-pressed={linkSentActive}
           >
             <IconEnvelope className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onToggleSeen(row.id)}
-            className={`${pipelineBtn} ${
-              row.seen ? "border-wine bg-wine/10 text-wine" : "border-sand text-wine/35"
-            }`}
-            title="Han visto / abierto la invitación"
-            aria-pressed={row.seen}
-          >
-            <IconEye className="h-4 w-4" />
           </button>
           <button
             type="button"
@@ -482,7 +487,7 @@ function InviteRow({
                 ? "border-wine bg-wine/10 text-wine"
                 : "border-sand text-wine/35"
             }`}
-            title="Marcar confirmado / volver a pendiente"
+            title="Marcar confirmado / quitar confirmación"
             aria-pressed={row.status === "confirmed"}
           >
             <IconCheck className="h-4 w-4" />
@@ -552,10 +557,9 @@ function InviteList({
   onFilterChange,
   onSearchChange,
   onCycleStatus,
+  onToggleLinkSent,
   onToggleConfirmedShortcut,
   onTogglePlusOne,
-  onToggleLinkSent,
-  onToggleSeen,
   onRemove,
 }) {
   const filtered = useMemo(() => {
@@ -589,6 +593,7 @@ function InviteList({
           >
             <option value="all">Todos</option>
             <option value="pending">Pendiente</option>
+            <option value="sent">Enviado</option>
             <option value="confirmed">Confirmados</option>
             <option value="declined">No asisten</option>
           </select>
@@ -596,7 +601,7 @@ function InviteList({
       </div>
 
       <div className="max-h-[min(60vh,520px)] overflow-auto">
-        <table className="w-full min-w-[760px] border-collapse text-left">
+        <table className="w-full min-w-[720px] border-collapse text-left">
           <thead className="sticky top-0 z-10 bg-cream/95 text-xs uppercase tracking-wide text-wine-dark backdrop-blur-sm">
             <tr>
               <th className="px-2 py-2 font-semibold">Nombre / enlace</th>
@@ -621,10 +626,9 @@ function InviteList({
                   row={row}
                   kvRow={analytics[row.slug] ?? {}}
                   onCycleStatus={onCycleStatus}
+                  onToggleLinkSent={onToggleLinkSent}
                   onToggleConfirmedShortcut={onToggleConfirmedShortcut}
                   onTogglePlusOne={onTogglePlusOne}
-                  onToggleLinkSent={onToggleLinkSent}
-                  onToggleSeen={onToggleSeen}
                   onRemove={onRemove}
                 />
               ))
@@ -646,8 +650,6 @@ export default function CreatorPage() {
     cycleStatus,
     updateStatus,
     togglePlusOne,
-    toggleLinkSent,
-    toggleSeen,
     removeInvitation,
   } = useInvitations()
 
@@ -708,6 +710,13 @@ export default function CreatorPage() {
     setFormKey((k) => k + 1)
   }
 
+  const toggleLinkSent = (id) => {
+    const row = invitations.find((i) => i.id === id)
+    if (!row) return
+    if (row.status === "pending") updateStatus(id, "sent")
+    else if (row.status === "sent") updateStatus(id, "pending")
+  }
+
   const toggleConfirmedShortcut = (id) => {
     const row = invitations.find((i) => i.id === id)
     if (!row) return
@@ -765,10 +774,9 @@ export default function CreatorPage() {
             onFilterChange={setFilter}
             onSearchChange={setSearch}
             onCycleStatus={cycleStatus}
+            onToggleLinkSent={toggleLinkSent}
             onToggleConfirmedShortcut={toggleConfirmedShortcut}
             onTogglePlusOne={togglePlusOne}
-            onToggleLinkSent={toggleLinkSent}
-            onToggleSeen={toggleSeen}
             onRemove={removeInvitation}
           />
         </div>

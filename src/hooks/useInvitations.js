@@ -3,7 +3,9 @@ import { buildSlug } from "../utils/slugify"
 
 const STORAGE_KEY = "wedding_invitations"
 
-/** @typedef {"pending" | "confirmed" | "declined"} InviteStatus */
+const STATUSES = /** @type {const} */ (["pending", "sent", "confirmed", "declined"])
+
+/** @typedef {(typeof STATUSES)[number]} InviteStatus */
 
 /**
  * @typedef {object} Invitation
@@ -12,8 +14,6 @@ const STORAGE_KEY = "wedding_invitations"
  * @property {string} slug
  * @property {boolean} plusOne
  * @property {InviteStatus} status
- * @property {boolean} linkSent
- * @property {boolean} seen
  * @property {string} createdAt
  */
 
@@ -22,30 +22,49 @@ function newId() {
   return `id-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+/** @param {unknown} rowRaw */
+function normalizeOneRow(rowRaw) {
+  if (
+    !rowRaw ||
+    typeof rowRaw !== "object" ||
+    typeof rowRaw.id !== "string" ||
+    typeof rowRaw.slug !== "string" ||
+    typeof rowRaw.name !== "string"
+  ) {
+    return null
+  }
+  const row = /** @type {Record<string, unknown>} */ (rowRaw)
+
+  let status = /** @type {string} */ (row.status)
+  const legacyLinkSent = Boolean(row.linkSent)
+
+  if (!STATUSES.includes(/** @type {InviteStatus} */ (status))) {
+    if (status === "pending" || status === "confirmed" || status === "declined") {
+      /* antiguo sin "sent" */
+    } else {
+      status = "pending"
+    }
+  }
+
+  if (status === "pending" && legacyLinkSent) status = "sent"
+
+  if (!STATUSES.includes(/** @type {InviteStatus} */ (status))) status = "pending"
+
+  return /** @type {Invitation} */ ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    plusOne: Boolean(row.plusOne),
+    status: /** @type {InviteStatus} */ (status),
+    createdAt:
+      typeof row.createdAt === "string" ? row.createdAt : new Date().toISOString(),
+  })
+}
+
 /** @param {unknown} parsed */
 function normalizeInvitations(parsed) {
   if (!Array.isArray(parsed)) return /** @type {Invitation[]} */ ([])
-  return parsed
-    .filter(
-      (row) =>
-        row &&
-        typeof row.id === "string" &&
-        typeof row.slug === "string" &&
-        typeof row.name === "string",
-    )
-    .map((row) => ({
-      id: row.id,
-      name: row.name,
-      slug: row.slug,
-      plusOne: Boolean(row.plusOne),
-      status: ["pending", "confirmed", "declined"].includes(row.status)
-        ? row.status
-        : "pending",
-      linkSent: Boolean(row.linkSent),
-      seen: Boolean(row.seen),
-      createdAt:
-        typeof row.createdAt === "string" ? row.createdAt : new Date().toISOString(),
-    }))
+  return parsed.map(normalizeOneRow).filter(Boolean)
 }
 
 function loadFromStorage() {
@@ -79,9 +98,12 @@ function computeStats(list) {
   const total = list.length
   const confirmedList = list.filter((i) => i.status === "confirmed")
   const pending = list.filter((i) => i.status === "pending").length
+  const sent = list.filter((i) => i.status === "sent").length
   const declined = list.filter((i) => i.status === "declined").length
-  const sent = list.filter((i) => i.linkSent).length
-  const seenCount = list.filter((i) => i.seen).length
+  /** Marcados como enlace enviado o ya respondieron */
+  const enviados = list.filter((i) =>
+    ["sent", "confirmed", "declined"].includes(i.status),
+  ).length
   const totalAttendees =
     confirmedList.length +
     confirmedList.filter((i) => i.plusOne).length
@@ -90,9 +112,9 @@ function computeStats(list) {
     total,
     confirmed: confirmedList.length,
     pending,
-    declined,
     sent,
-    seen: seenCount,
+    declined,
+    enviados,
     totalAttendees,
     plusOneAmongConfirmed,
   }
@@ -173,8 +195,6 @@ export function useInvitations() {
       slug,
       plusOne,
       status: "pending",
-      linkSent: false,
-      seen: false,
       createdAt: new Date().toISOString(),
     })
     const next = [inv, ...prev]
@@ -199,24 +219,17 @@ export function useInvitations() {
     )
   }, [persist])
 
-  const toggleLinkSent = useCallback((id) => {
-    persist((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, linkSent: !i.linkSent } : i)),
-    )
-  }, [persist])
-
-  const toggleSeen = useCallback((id) => {
-    persist((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, seen: !i.seen } : i)),
-    )
-  }, [persist])
-
   const removeInvitation = useCallback((id) => {
     persist((prev) => prev.filter((i) => i.id !== id))
   }, [persist])
 
   const cycleStatus = useCallback((id) => {
-    const order = /** @type {InviteStatus[]} */ (["pending", "confirmed", "declined"])
+    const order = /** @type {InviteStatus[]} */ ([
+      "pending",
+      "sent",
+      "confirmed",
+      "declined",
+    ])
     persist((prev) =>
       prev.map((i) => {
         if (i.id !== id) return i
@@ -236,8 +249,6 @@ export function useInvitations() {
     updateStatus,
     cycleStatus,
     togglePlusOne,
-    toggleLinkSent,
-    toggleSeen,
     removeInvitation,
   }
 }
