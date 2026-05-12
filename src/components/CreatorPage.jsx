@@ -146,7 +146,8 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
   ]
 
   /** Números grandes del panel: Arial para legibilidad */
-  const nLg = "font-[Arial,Helvetica,sans-serif] text-3xl font-semibold tabular-nums leading-none"
+  const nLg =
+    "font-[Arial,Helvetica,sans-serif] text-2xl font-semibold tabular-nums leading-none sm:text-3xl"
   const nFunnel = "font-[Arial,Helvetica,sans-serif] text-lg font-semibold tabular-nums leading-none text-wine-dark"
 
   return (
@@ -184,7 +185,7 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-3">
         <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
           <div className="flex items-center gap-1.5">
             <IconEye className="h-4 w-4 text-sky-700 shrink-0" />
@@ -215,7 +216,7 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
       </div>
 
       <div>
-        <p className="mb-2 text-xs font-sans font-semibold uppercase tracking-wide text-wine-dark">
+        <p className="mb-2 text-[10px] font-sans font-semibold uppercase leading-snug tracking-wide text-wine-dark sm:text-xs">
           Embudo (cada barra = % sobre invitaciones creadas)
         </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -240,7 +241,7 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
         </div>
       </div>
 
-      <p className="text-sm text-wine-dark">
+      <p className="text-sm leading-relaxed text-wine-dark sm:text-base">
         <span className="font-semibold">Asistentes estimados (confirmados):</span>{" "}
         {stats.confirmed} invitado{stats.confirmed !== 1 ? "s" : ""}
         {stats.plusOneAmongConfirmed > 0 ? (
@@ -275,7 +276,7 @@ function InviteForm({ onSubmit, formError, formKey }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-xl border border-wine/40 bg-white/80 p-4 shadow-sm backdrop-blur-sm"
+      className="rounded-xl border border-wine/40 bg-white/80 p-3 shadow-sm backdrop-blur-sm sm:p-4"
     >
       <h2 className="font-serif text-xl text-wine-dark">Crear invitación</h2>
       <p className="mt-1 text-sm text-wine/90">
@@ -325,7 +326,7 @@ function InviteForm({ onSubmit, formError, formKey }) {
 
       <button
         type="submit"
-        className="mt-4 w-full rounded-lg bg-wine px-4 py-2.5 font-sans text-sm font-semibold text-cream shadow transition hover:bg-wine-dark sm:w-auto"
+        className="mt-4 w-full min-h-[44px] rounded-lg bg-wine px-4 py-3 font-sans text-sm font-semibold text-cream shadow transition hover:bg-wine-dark sm:w-auto sm:py-2.5"
       >
         Generar enlace
       </button>
@@ -549,6 +550,136 @@ function InviteRow({
   )
 }
 
+/** Fila compacta para móvil: evita tabla de 720px+ que obliga a zoom/scroll incómodo */
+function InviteMobileCard({
+  row,
+  kvRow,
+  onCycleStatus,
+  onToggleLinkSent,
+  onToggleConfirmedShortcut,
+  onTogglePlusOne,
+  onRemove,
+}) {
+  const path = invitePath(row.slug, row.plusOne)
+  const views = Number(kvRow?.views) || 0
+  const clicks = Number(kvRow?.clicks) || 0
+  const confirms = Number(kvRow?.confirms) || 0
+  const lastView = kvRow?.last_view ? formatTimeAgo(kvRow.last_view) : null
+  const lastClick = kvRow?.last_click ? formatTimeAgo(kvRow.last_click) : null
+  const lastConfirm = kvRow?.last_confirm ? formatTimeAgo(kvRow.last_confirm) : null
+
+  const copyPath = async () => {
+    const url = fullInviteUrl(row.slug, row.plusOne)
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const pipelineBtn =
+    "inline-flex h-10 w-10 items-center justify-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-wine/40 active:scale-[0.98]"
+  const linkSentActive = ["sent", "confirmed", "declined"].includes(row.status)
+
+  return (
+    <article className="border-b border-sand/60 px-3 py-4 last:border-b-0 sm:px-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="font-sans text-sm font-semibold text-wine-dark">{row.name}</p>
+          <button
+            type="button"
+            onClick={copyPath}
+            className="mt-1 max-w-full break-all text-left font-mono text-[11px] leading-snug text-wine/80 underline decoration-wine/30 hover:text-wine"
+          >
+            {path}
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={() => onRemove(row.id)}
+          className="inline-flex shrink-0 rounded-lg p-2 text-wine/60 hover:bg-red-50 hover:text-red-800"
+          title="Eliminar"
+        >
+          <IconTrash className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onCycleStatus(row.id)}
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${statusPillClass(row.status)}`}
+          title="Clic para avanzar: pendiente → enviado → confirmado → no asiste"
+        >
+          {statusLabel(row.status)}
+        </button>
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => onToggleLinkSent(row.id)}
+            className={`${pipelineBtn} ${
+              linkSentActive ? "border-wine bg-wine/10 text-wine" : "border-sand text-wine/35"
+            }`}
+            title="Enlace enviado (pendiente ↔ enviado)"
+            aria-pressed={linkSentActive}
+          >
+            <IconEnvelope className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onToggleConfirmedShortcut(row.id)}
+            className={`${pipelineBtn} ${
+              row.status === "confirmed"
+                ? "border-wine bg-wine/10 text-wine"
+                : "border-sand text-wine/35"
+            }`}
+            title="Marcar confirmado / quitar confirmación"
+            aria-pressed={row.status === "confirmed"}
+          >
+            <IconCheck className="h-4 w-4" />
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={() => onTogglePlusOne(row.id)}
+          className={`ml-auto rounded-full px-3 py-1.5 text-xs font-semibold ${
+            row.plusOne ? "bg-wine text-cream" : "bg-sand/50 text-wine-dark"
+          }`}
+        >
+          +1: {row.plusOne ? "Sí" : "No"}
+        </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-sand/40 pt-3 text-[11px]">
+        <span
+          className={`inline-flex items-center gap-1 ${views > 0 ? "text-sky-800" : "text-wine/35"}`}
+          title={lastView ? `Última vista: ${lastView}` : "Sin visitas aún"}
+        >
+          <IconEye className="h-3.5 w-3.5 shrink-0" />
+          <span className={views > 0 ? "font-semibold" : ""}>{views}</span>
+          {lastView ? <span className="text-wine/50">· {lastView}</span> : null}
+        </span>
+        <span
+          className={`inline-flex items-center gap-1 ${clicks > 0 ? "text-violet-800" : "text-wine/35"}`}
+          title={lastClick ? `Último click: ${lastClick}` : "Sin clicks aún"}
+        >
+          <IconCursor className="h-3.5 w-3.5 shrink-0" />
+          <span className={clicks > 0 ? "font-semibold" : ""}>{clicks}</span>
+          {lastClick ? <span className="text-wine/50">· {lastClick}</span> : null}
+        </span>
+        <span
+          className={`inline-flex items-center gap-1 ${confirms > 0 ? "text-rose-700" : "text-wine/35"}`}
+          title={lastConfirm ? `Último confirmar: ${lastConfirm}` : "No ha pulsado confirmar"}
+        >
+          <IconHeart className="h-3.5 w-3.5 shrink-0" />
+          <span className={confirms > 0 ? "font-semibold" : ""}>{confirms}</span>
+          {lastConfirm ? <span className="text-wine/50">· {lastConfirm}</span> : null}
+        </span>
+      </div>
+    </article>
+  )
+}
+
 function InviteList({
   rows,
   analytics,
@@ -576,20 +707,20 @@ function InviteList({
 
   return (
     <div className="rounded-xl border border-wine/40 bg-white/80 shadow-sm backdrop-blur-sm">
-      <div className="flex flex-col gap-3 border-b border-wine/20 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="font-serif text-xl text-wine-dark">Lista de invitados</h2>
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-3 border-b border-wine/20 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <h2 className="font-serif text-lg text-wine-dark sm:text-xl">Lista de invitados</h2>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <input
             type="search"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Buscar…"
-            className="min-w-[140px] flex-1 rounded-lg border border-sand px-3 py-2 text-sm text-wine-dark focus:border-wine focus:outline-none focus:ring-1 focus:ring-wine sm:max-w-xs"
+            className="min-h-[44px] w-full min-w-0 flex-1 rounded-lg border border-sand px-3 py-2 text-base text-wine-dark focus:border-wine focus:outline-none focus:ring-1 focus:ring-wine sm:max-w-xs sm:text-sm"
           />
           <select
             value={filter}
             onChange={(e) => onFilterChange(e.target.value)}
-            className="rounded-lg border border-sand bg-white px-3 py-2 text-sm text-wine-dark focus:border-wine focus:outline-none"
+            className="min-h-[44px] w-full rounded-lg border border-sand bg-white px-3 py-2 text-base text-wine-dark focus:border-wine focus:outline-none sm:w-auto sm:text-sm"
           >
             <option value="all">Todos</option>
             <option value="pending">Pendiente</option>
@@ -600,8 +731,32 @@ function InviteList({
         </div>
       </div>
 
-      <div className="max-h-[min(60vh,520px)] overflow-auto">
-        <table className="w-full min-w-[720px] border-collapse text-left">
+      <div className="max-h-[min(70vh,560px)] overflow-y-auto md:max-h-[min(60vh,520px)]">
+        {/* Móvil: tarjetas apiladas, sin scroll horizontal */}
+        <div className="md:hidden">
+          {filtered.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-wine/70">
+              No hay invitados que coincidan. Crea uno arriba o cambia el filtro.
+            </p>
+          ) : (
+            filtered.map((row) => (
+              <InviteMobileCard
+                key={row.id}
+                row={row}
+                kvRow={analytics[row.slug] ?? {}}
+                onCycleStatus={onCycleStatus}
+                onToggleLinkSent={onToggleLinkSent}
+                onToggleConfirmedShortcut={onToggleConfirmedShortcut}
+                onTogglePlusOne={onTogglePlusOne}
+                onRemove={onRemove}
+              />
+            ))
+          )}
+        </div>
+
+        {/* Tablet/desktop: tabla */}
+        <div className="hidden overflow-x-auto md:block">
+          <table className="w-full min-w-[640px] border-collapse text-left lg:min-w-[720px]">
           <thead className="sticky top-0 z-10 bg-cream/95 text-xs uppercase tracking-wide text-wine-dark backdrop-blur-sm">
             <tr>
               <th className="px-2 py-2 font-semibold">Nombre / enlace</th>
@@ -635,6 +790,7 @@ function InviteList({
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )
@@ -725,23 +881,17 @@ export default function CreatorPage() {
 
   return (
     <div className="relative z-10 flex min-h-[100dvh] w-full flex-1 flex-col overflow-x-hidden overflow-y-auto bg-cream text-wine-dark">
-      <div className="mx-auto max-w-5xl px-4 py-6 pb-16">
-        <header className="mb-8 border-b border-wine/30 pb-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="font-serif text-2xl text-wine-dark md:text-3xl">
+      <div className="mx-auto max-w-5xl px-3 py-5 pb-20 sm:px-4 sm:py-6 sm:pb-16">
+        <header className="mb-6 border-b border-wine/30 pb-4 sm:mb-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="font-serif text-xl leading-snug text-wine-dark sm:text-2xl md:text-3xl">
                 Luisa & Blas · Gestor de invitaciones
-              </p>
-              <p className="mt-1 text-sm text-wine/85">
-                La <strong>lista de invitados</strong> se guarda en <strong>Vercel KV</strong> (la misma
-                en móvil, PC y tablet). Este navegador también guarda una copia local. Enlaces:{" "}
-                <span className="font-medium">{PUBLIC_INVITE_DOMAIN.replace("https://", "")}</span>
-                . Métricas de visitas y sobre: actualización cada ~30 s.
               </p>
             </div>
             <Link
               to="/"
-              className="inline-flex items-center justify-center rounded-lg border border-wine px-4 py-2 text-sm font-semibold text-wine transition hover:bg-white"
+              className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center rounded-lg border border-wine px-4 py-2.5 text-sm font-semibold text-wine transition hover:bg-white sm:w-auto sm:py-2"
             >
               Ver invitación pública
             </Link>
