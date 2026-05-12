@@ -492,7 +492,10 @@ function FadeInSection({ children, className = "", delay = "0ms", observerRoot =
 
 function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
   const [guestInfo] = useState(() => getGuestStateFromUrl())
-  const guestName = guestInfo.displayName
+  const guestName =
+    typeof guestInfo.displayName === "string" && guestInfo.displayName.trim().length > 0
+      ? guestInfo.displayName.trim()
+      : "Invitado"
   const [showWelcomeBg, setShowWelcomeBg] = useState(false);
   const [showGuestName, setShowGuestName] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
@@ -505,33 +508,37 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
       const end = Date.now() + duration;
 
       const frame = () => {
-        const goldColors = ['#D4AF37', '#FFDF00', '#DAA520', '#B8860B', '#F3E5AB'];
-        
-        confetti({
-          particleCount: 8,
-          angle: 60,
-          spread: 80,
-          origin: { x: -0.1, y: 0.85 },
-          startVelocity: 65,
-          colors: goldColors,
-          ticks: 200,
-          zIndex: 100
-        });
-        confetti({
-          particleCount: 8,
-          angle: 120,
-          spread: 80,
-          origin: { x: 1.1, y: 0.85 },
-          startVelocity: 65,
-          colors: goldColors,
-          ticks: 200,
-          zIndex: 100
-        });
+        try {
+          const goldColors = ["#D4AF37", "#FFDF00", "#DAA520", "#B8860B", "#F3E5AB"]
+
+          confetti({
+            particleCount: 8,
+            angle: 60,
+            spread: 80,
+            origin: { x: -0.1, y: 0.85 },
+            startVelocity: 65,
+            colors: goldColors,
+            ticks: 200,
+            zIndex: 100,
+          })
+          confetti({
+            particleCount: 8,
+            angle: 120,
+            spread: 80,
+            origin: { x: 1.1, y: 0.85 },
+            startVelocity: 65,
+            colors: goldColors,
+            ticks: 200,
+            zIndex: 100,
+          })
+        } catch {
+          /* canvas-confetti u optimizadores del navegador */
+        }
 
         if (Date.now() < end) {
-          requestAnimationFrame(frame);
+          requestAnimationFrame(frame)
         }
-      };
+      }
       frame();
     }
   }, [showConfetti]);

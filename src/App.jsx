@@ -1,12 +1,15 @@
-import { Route, Routes } from "react-router-dom"
+import { Route, Routes, useLocation } from "react-router-dom"
 import CreatorGate from "./components/CreatorGate"
 import CreatorPage from "./components/CreatorPage"
+import ErrorBoundary from "./components/ErrorBoundary"
 import InvitationRoute from "./components/InvitationRoute"
 
 function App() {
+  const location = useLocation()
   return (
-    <div className="flex min-h-[100dvh] w-full flex-1 flex-col">
-      <Routes>
+    <ErrorBoundary resetKey={location.pathname}>
+      <div className="flex min-h-[100dvh] w-full flex-1 flex-col">
+        <Routes>
         <Route
           path="/creador"
           element={
@@ -25,8 +28,9 @@ function App() {
         />
         {/* "*" debe ir al final: captura / y /Cualquier-Invitado sin pisar /creador */}
         <Route path="*" element={<InvitationRoute />} />
-      </Routes>
-    </div>
+        </Routes>
+      </div>
+    </ErrorBoundary>
   )
 }
 
