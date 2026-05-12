@@ -640,6 +640,7 @@ export default function CreatorPage() {
   const {
     invitations,
     lastCreated,
+    syncReady,
     stats,
     addInvitation,
     cycleStatus,
@@ -723,10 +724,10 @@ export default function CreatorPage() {
                 Luisa & Blas · Gestor de invitaciones
               </p>
               <p className="mt-1 text-sm text-wine/85">
-                La lista CRM se guarda en este navegador. Los enlaces usan{" "}
+                La <strong>lista de invitados</strong> se guarda en <strong>Vercel KV</strong> (la misma
+                en móvil, PC y tablet). Este navegador también guarda una copia local. Enlaces:{" "}
                 <span className="font-medium">{PUBLIC_INVITE_DOMAIN.replace("https://", "")}</span>
-                . Las visitas, clicks y pulsaciones del botón confirmar se actualizan en tiempo real desde Vercel KV
-                (cada 30 s aquí).
+                . Métricas de visitas y sobre: actualización cada ~30 s.
               </p>
             </div>
             <Link
@@ -737,6 +738,12 @@ export default function CreatorPage() {
             </Link>
           </div>
         </header>
+
+        {!syncReady ? (
+          <p className="mb-4 rounded-lg border border-wine/30 bg-white/90 px-3 py-2 text-sm text-wine-dark">
+            Sincronizando lista con el servidor…
+          </p>
+        ) : null}
 
         <DashboardStats stats={stats} kvTotals={kvTotals} />
 

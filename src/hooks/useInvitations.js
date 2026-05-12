@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { buildSlug } from "../utils/slugify"
 
 const STORAGE_KEY = "wedding_invitations"
@@ -22,33 +22,38 @@ function newId() {
   return `id-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+/** @param {unknown} parsed */
+function normalizeInvitations(parsed) {
+  if (!Array.isArray(parsed)) return /** @type {Invitation[]} */ ([])
+  return parsed
+    .filter(
+      (row) =>
+        row &&
+        typeof row.id === "string" &&
+        typeof row.slug === "string" &&
+        typeof row.name === "string",
+    )
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      plusOne: Boolean(row.plusOne),
+      status: ["pending", "confirmed", "declined"].includes(row.status)
+        ? row.status
+        : "pending",
+      linkSent: Boolean(row.linkSent),
+      seen: Boolean(row.seen),
+      createdAt:
+        typeof row.createdAt === "string" ? row.createdAt : new Date().toISOString(),
+    }))
+}
+
 function loadFromStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return /** @type {Invitation[]} */ ([])
     const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed
-      .filter(
-        (row) =>
-          row &&
-          typeof row.id === "string" &&
-          typeof row.slug === "string" &&
-          typeof row.name === "string",
-      )
-      .map((row) => ({
-        id: row.id,
-        name: row.name,
-        slug: row.slug,
-        plusOne: Boolean(row.plusOne),
-        status: ["pending", "confirmed", "declined"].includes(row.status)
-          ? row.status
-          : "pending",
-        linkSent: Boolean(row.linkSent),
-        seen: Boolean(row.seen),
-        createdAt:
-          typeof row.createdAt === "string" ? row.createdAt : new Date().toISOString(),
-      }))
+    return normalizeInvitations(parsed)
   } catch {
     return /** @type {Invitation[]} */ ([])
   }
@@ -60,6 +65,14 @@ function saveToStorage(list) {
   } catch {
     /* capacidad o modo privado */
   }
+}
+
+function pushGuestsToServer(list) {
+  fetch("/api/guests", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ invitations: list }),
+  }).catch(() => {})
 }
 
 function computeStats(list) {
@@ -88,11 +101,51 @@ function computeStats(list) {
 export function useInvitations() {
   const [invitations, setInvitations] = useState(loadFromStorage)
   const [lastCreated, setLastCreated] = useState(/** @type {Invitation | null} */ (null))
+  const [syncReady, setSyncReady] = useState(false)
+  const invitationsRef = useRef(invitations)
+
+  useEffect(() => {
+    invitationsRef.current = invitations
+  }, [invitations])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const r = await fetch("/api/guests")
+        const data = r.ok ? await r.json() : null
+        const remote = normalizeInvitations(data?.invitations)
+        const local = loadFromStorage()
+
+        if (remote.length > 0) {
+          if (!cancelled) {
+            setInvitations(remote)
+            saveToStorage(remote)
+          }
+        } else if (local.length > 0) {
+          await fetch("/api/guests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ invitations: local }),
+          }).catch(() => {})
+          if (!cancelled) setInvitations(local)
+        }
+      } catch {
+        if (!cancelled) setInvitations(loadFromStorage())
+      } finally {
+        if (!cancelled) setSyncReady(true)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const persist = useCallback((updater) => {
     setInvitations((prev) => {
       const next = typeof updater === "function" ? updater(prev) : updater
       saveToStorage(next)
+      pushGuestsToServer(next)
       return next
     })
   }, [])
@@ -106,7 +159,7 @@ export function useInvitations() {
     const slug = buildSlug(fn, ln)
     if (!slug) return { ok: false, error: "Nombre y apellido son obligatorios." }
 
-    const prev = loadFromStorage()
+    const prev = invitationsRef.current
     if (prev.some((i) => i.slug === slug)) {
       return {
         ok: false,
@@ -126,6 +179,7 @@ export function useInvitations() {
     })
     const next = [inv, ...prev]
     saveToStorage(next)
+    pushGuestsToServer(next)
     setInvitations(next)
     setLastCreated(inv)
     return { ok: true }
@@ -176,6 +230,7 @@ export function useInvitations() {
   return {
     invitations,
     lastCreated,
+    syncReady,
     stats,
     addInvitation,
     updateStatus,
