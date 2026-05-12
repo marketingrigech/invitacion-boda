@@ -16,8 +16,10 @@
     "vite": "^7.3.1"
   },
   "dependencies": {
+    "@vercel/kv": "^3.0.0",
     "canvas-confetti": "^1.9.4",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.15.0"
   }
 }
