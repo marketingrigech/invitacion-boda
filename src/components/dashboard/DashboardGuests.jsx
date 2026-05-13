@@ -91,6 +91,16 @@ function InviteFormMini({ onSubmit, formError, formKey }) {
 const btnTiny =
   "rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide border border-wine/30 text-wine hover:bg-wine hover:text-cream transition"
 
+function useFlashCopied(durationMs = 2000) {
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (!copied) return
+    const t = window.setTimeout(() => setCopied(false), durationMs)
+    return () => window.clearTimeout(t)
+  }, [copied, durationMs])
+  return [copied, setCopied]
+}
+
 function Activity({ row, kv }) {
   const views = Number(kv?.views) || 0
   const clicks = Number(kv?.clicks) || 0
@@ -137,30 +147,44 @@ function Activity({ row, kv }) {
   )
 }
 
-/** Icono enlace: copia la ruta de invitación al portapapeles. */
-function CopyInviteLinkButton({ onCopy, className = "" }) {
+/** Icono enlace: copia la URL al portapapeles y muestra «Enlace copiado». */
+function CopyInviteLinkButton({ row, className = "" }) {
+  const [copied, setCopied] = useFlashCopied()
   return (
-    <button
-      type="button"
-      className={`inline-flex shrink-0 items-center justify-center rounded-md border border-wine/25 bg-white/80 p-1 text-wine/80 hover:border-wine/50 hover:bg-cream hover:text-wine-dark ${className}`}
-      title="Copiar enlace"
-      aria-label="Copiar enlace de invitación"
-      onClick={onCopy}
-    >
-      <svg
-        className="h-4 w-4"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
+    <div className={`flex flex-col items-center gap-0.5 ${className}`}>
+      <button
+        type="button"
+        className="inline-flex shrink-0 items-center justify-center rounded-md border border-wine/25 bg-white/80 p-1 text-wine/80 hover:border-wine/50 hover:bg-cream hover:text-wine-dark"
+        title="Copiar enlace"
+        aria-label={`Copiar enlace de invitación de ${row.name}`}
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(fullInviteUrl(row.slug, row.plusOne))
+            setCopied(true)
+          } catch {
+            /* ignore */
+          }
+        }}
       >
-        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-      </svg>
-    </button>
+        <svg
+          className="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+        </svg>
+      </button>
+      {copied ? (
+        <span className="max-w-[6rem] text-center text-[9px] font-semibold leading-tight text-emerald-800" role="status">
+          Enlace copiado
+        </span>
+      ) : null}
+    </div>
   )
 }
 
@@ -208,14 +232,6 @@ export default function DashboardGuests() {
     else {
       setFormKey((k) => k + 1)
       setAddOpen(false)
-    }
-  }
-
-  const copyPath = async (row) => {
-    try {
-      await navigator.clipboard.writeText(fullInviteUrl(row.slug, row.plusOne))
-    } catch {
-      /* ignore */
     }
   }
 
@@ -275,6 +291,9 @@ export default function DashboardGuests() {
             <thead className="sticky top-0 z-10 bg-cream/95 text-[10px] uppercase tracking-wide text-wine backdrop-blur-sm">
               <tr>
                 <th className="border-b border-wine/20 px-2 py-1.5">Invitado</th>
+                <th className="border-b border-wine/20 px-2 py-1.5 text-center whitespace-nowrap w-24">
+                  Enlace
+                </th>
                 <th className="border-b border-wine/20 px-2 py-1.5">Estado</th>
                 <th className="border-b border-wine/20 px-2 py-1.5 text-center">+1</th>
                 <th className="border-b border-wine/20 px-2 py-1.5">Actividad</th>
@@ -287,10 +306,10 @@ export default function DashboardGuests() {
                 return (
                   <tr key={row.id} className="border-b border-sand/50 hover:bg-cream/50">
                     <td className="max-w-[10rem] px-2 py-1.5 align-middle sm:max-w-[14rem]">
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <span className="min-w-0 truncate font-medium text-wine-dark">{row.name}</span>
-                        <CopyInviteLinkButton onCopy={() => copyPath(row)} className="shrink-0" />
-                      </div>
+                      <span className="min-w-0 truncate font-medium text-wine-dark">{row.name}</span>
+                    </td>
+                    <td className="px-2 py-1.5 align-middle text-center">
+                      <CopyInviteLinkButton row={row} />
                     </td>
                     <td className="whitespace-nowrap px-2 py-1.5 align-middle">
                       <button

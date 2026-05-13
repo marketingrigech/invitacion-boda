@@ -90,20 +90,6 @@ const VENUE_FINCA_CAROUSEL_URLS = (() => {
 /** WhatsApp en formato internacional sin + ni espacios (confirmaciones de asistencia). */
 const RSVP_WHATSAPP_PHONE = "34655935191"
 
-/** Valores persistidos también en KV /api/rsvp — coherencia con servidor. */
-const MENU_OPTIONS = /** @type {const} */ ([
-  ["carne", "Carne"],
-  ["pescado", "Pescado"],
-  ["vegetariano", "Vegetariano"],
-  ["infantil", "Menú infantil"],
-])
-
-/** @param {string} menuValue */
-function menuHumanLabel(menuValue) {
-  const row = MENU_OPTIONS.find(([value]) => value === menuValue)
-  return row ? row[1] : menuValue
-}
-
 /** Marco fotos dentro del interior de la tarjeta (sin bleed; alineado al texto). */
 const fotoMarcoInvitacion =
   "mx-auto w-full max-w-md overflow-hidden rounded-sm border-[6px] border-white shadow-lg outline outline-[1px] outline-black/5"
@@ -528,15 +514,8 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
     }
   }, [showConfetti]);
 
-  const [rsvpName, setRsvpName] = useState(() =>
-    guestInfo.prefillRsvpName ? guestInfo.displayName : "",
-  )
-  const [rsvpComments, setRsvpComments] = useState(() =>
-    guestInfo.prefillRsvpName ? "Sin alergías ni observaciones." : "",
-  )
-  const [rsvpPlusOne, setRsvpPlusOne] = useState(() => guestInfo.plusOne === true)
-  const [rsvpMenu, setRsvpMenu] = useState("carne")
-  const [rsvpPlusOneMenu, setRsvpPlusOneMenu] = useState("carne")
+  const [rsvpName, setRsvpName] = useState("")
+  const [rsvpComments, setRsvpComments] = useState("")
   const [rsvpSubmitting, setRsvpSubmitting] = useState(false)
   const [rsvpFeedback, setRsvpFeedback] = useState(null) // { type: 'ok' | 'err', text: string }
 
@@ -602,7 +581,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
     e.preventDefault()
     setRsvpFeedback(null)
 
-    const fullName = rsvpName.trim()
+    const fullName = guestInfo.prefillRsvpName ? guestName.trim() : rsvpName.trim()
     if (!fullName) {
       setRsvpFeedback({ type: "err", text: "Indica nombre y apellidos para confirmar." })
       return
@@ -610,7 +589,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
     const comments = rsvpComments.trim()
     const slug = extractSlugFromLocation()
-    const hasPlusOneGuest = Boolean(guestInfo.plusOne && rsvpPlusOne)
+    const hasPlusOneGuest = Boolean(guestInfo.plusOne)
 
     if (slug) {
       try {
@@ -622,8 +601,8 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
             name: fullName,
             plusOne: hasPlusOneGuest,
             plusOneName: "",
-            menu: rsvpMenu,
-            plusOneMenu: hasPlusOneGuest ? rsvpPlusOneMenu : "",
+            menu: "",
+            plusOneMenu: "",
             dietary: comments,
             email: "",
             phone: "",
@@ -639,10 +618,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
       "",
       `Nombre: ${fullName}`,
       hasPlusOneGuest ? "Con acompañante (+1)." : "Voy solo/a.",
-      "",
-      `Menú principal: ${menuHumanLabel(rsvpMenu)}`,
-      hasPlusOneGuest ? `Menú acompañante: ${menuHumanLabel(rsvpPlusOneMenu)}` : "",
-    ].filter(Boolean)
+    ]
     if (comments) lines.push("", "Alergias u observaciones:", comments)
     const text = lines.join("\n")
 
@@ -1171,23 +1147,23 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
               </p>
               <div className="flex justify-center gap-0.5 sm:gap-3 md:gap-5 px-0.5 sm:px-0">
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{timeLeft.dias ?? 0}</span>
-                  <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Días</span>
+                  <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{timeLeft.dias ?? 0}</span>
+                  <span className="text-[10px] sm:text-[11px] md:text-xs uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2 font-bold">Días</span>
                 </div>
-                <span className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
+                <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{String(timeLeft.horas ?? 0).padStart(2, "0")}</span>
-                  <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Hrs</span>
+                  <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{String(timeLeft.horas ?? 0).padStart(2, "0")}</span>
+                  <span className="text-[10px] sm:text-[11px] md:text-xs uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2 font-bold">Hrs</span>
                 </div>
-                <span className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
+                <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{String(timeLeft.minutos ?? 0).padStart(2, "0")}</span>
-                  <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Min</span>
+                  <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{String(timeLeft.minutos ?? 0).padStart(2, "0")}</span>
+                  <span className="text-[10px] sm:text-[11px] md:text-xs uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2 font-bold">Min</span>
                 </div>
-                <span className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
+                <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl text-wine/35 mt-0.5 sm:mt-1 shrink-0 font-bold leading-none font-[Arial,Helvetica,sans-serif]">:</span>
                 <div className="flex flex-col items-center min-w-0">
-                  <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{String(timeLeft.segundos ?? 0).padStart(2, "0")}</span>
-                  <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2.5 font-bold">Seg</span>
+                  <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tabular-nums font-bold text-wine leading-none font-[Arial,Helvetica,sans-serif]">{String(timeLeft.segundos ?? 0).padStart(2, "0")}</span>
+                  <span className="text-[10px] sm:text-[11px] md:text-xs uppercase tracking-widest text-wine-dark/70 mt-1.5 sm:mt-2 font-bold">Seg</span>
                 </div>
               </div>
 
@@ -1240,24 +1216,26 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
               className="w-full max-w-sm mx-auto flex flex-col gap-6"
               onSubmit={handleRsvpSubmit}
             >
-              <div className="flex flex-col text-left">
-                <label
-                  className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium"
-                  htmlFor="rsvp-name"
-                >
-                  Nombre completo
-                </label>
-                <input
-                  id="rsvp-name"
-                  type="text"
-                  value={rsvpName}
-                  onChange={e => setRsvpName(e.target.value)}
-                  autoComplete="name"
-                  className="w-full border-b-[1.5px] border-wine/30 bg-transparent py-2 px-1 text-wine-dark focus:outline-none focus:border-wine transition-colors placeholder:text-wine/30 font-serif italic"
-                  placeholder={guestInfo.prefillRsvpName ? "" : "Escribe tu nombre y apellidos"}
-                  required
-                />
-              </div>
+              {!guestInfo.prefillRsvpName ? (
+                <div className="flex flex-col text-left">
+                  <label
+                    className="text-xs uppercase tracking-[0.2em] text-wine-dark mb-2 font-medium"
+                    htmlFor="rsvp-name"
+                  >
+                    Nombre completo
+                  </label>
+                  <input
+                    id="rsvp-name"
+                    type="text"
+                    value={rsvpName}
+                    onChange={e => setRsvpName(e.target.value)}
+                    autoComplete="name"
+                    className="w-full border-b-[1.5px] border-wine/30 bg-transparent py-2 px-1 text-wine-dark focus:outline-none focus:border-wine transition-colors placeholder:text-wine/30 font-serif italic"
+                    placeholder="Escribe tu nombre y apellidos"
+                    required
+                  />
+                </div>
+              ) : null}
 
               <div className="flex flex-col text-left">
                 <label
@@ -1275,83 +1253,6 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                   placeholder="Ej: Soy celíaco, etc. (opcional)"
                 />
               </div>
-
-              <div className="flex flex-col gap-3 text-left" role="group" aria-label="Selección de menú">
-                <span className="text-xs uppercase tracking-[0.2em] text-wine-dark font-medium">
-                  Menú principal (adultos)
-                </span>
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-                  {MENU_OPTIONS.map(([value, label]) => (
-                    <label
-                      key={value}
-                      className={`cursor-pointer rounded-sm border bg-transparent px-2.5 py-2 text-center text-sm font-serif italic transition-colors focus-within:ring-2 focus-within:ring-wine/40 ${
-                        rsvpMenu === value
-                          ? "border-wine text-wine-dark shadow-[inset_0_0_0_1px_rgba(71,20,33,0.35)]"
-                          : "border-wine/30 text-wine-dark/85 hover:border-wine/55"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="rsvp-menu"
-                        value={value}
-                        checked={rsvpMenu === value}
-                        onChange={() => setRsvpMenu(value)}
-                        className="sr-only"
-                      />
-                      {label}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {guestInfo.plusOne && (
-                <label className="flex items-center gap-3 text-left mt-2 cursor-pointer group">
-                  <div className="relative flex items-center justify-center w-5 h-5">
-                    <input
-                      type="checkbox"
-                      checked={rsvpPlusOne}
-                      onChange={e => setRsvpPlusOne(e.target.checked)}
-                      className="peer appearance-none w-5 h-5 border-[1.5px] border-wine/40 rounded-[2px] checked:bg-wine checked:border-wine cursor-pointer transition-all focus:outline-none"
-                    />
-                    <div className="absolute text-cream pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
-                    </div>
-                  </div>
-                  <span className="text-sm font-serif italic text-wine-dark/80 group-hover:text-wine transition-colors cursor-pointer">
-                    Voy con un acompañante (+1)
-                  </span>
-                </label>
-              )}
-
-              {guestInfo.plusOne && rsvpPlusOne ? (
-                <div className="flex flex-col gap-3 text-left" role="group" aria-label="Menú del acompañante">
-                  <span className="text-xs uppercase tracking-[0.2em] text-wine-dark font-medium">
-                    Menú del acompañante
-                  </span>
-                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-                    {MENU_OPTIONS.map(([value, label]) => (
-                      <label
-                        key={`p1-${value}`}
-                        className={`cursor-pointer rounded-sm border bg-transparent px-2.5 py-2 text-center text-sm font-serif italic transition-colors focus-within:ring-2 focus-within:ring-wine/40 ${
-                          rsvpPlusOneMenu === value
-                            ? "border-wine text-wine-dark shadow-[inset_0_0_0_1px_rgba(71,20,33,0.35)]"
-                            : "border-wine/30 text-wine-dark/85 hover:border-wine/55"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="rsvp-menu-plus-one"
-                          value={value}
-                          checked={rsvpPlusOneMenu === value}
-                          onChange={() => setRsvpPlusOneMenu(value)}
-                          className="sr-only"
-                        />
-                        {label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
 
               {rsvpFeedback && (
                 <p

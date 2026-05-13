@@ -67,28 +67,28 @@ export default function DashboardPage() {
 
       <header className="no-print relative border-b border-wine/25 bg-white/92 px-4 py-4 backdrop-blur-md md:px-8">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-2xl font-semibold text-wine-dark md:text-3xl">
-              Dashboard Gestor de novios
+          <div className="min-w-0">
+            <p className="font-serif text-xl leading-snug text-wine-dark sm:text-2xl md:text-3xl">
+              Lis & Juanjo - Gestor de invitaciones
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {saving ? (
               <span className="text-xs font-semibold uppercase tracking-wide text-wine/70">
                 {saving}
               </span>
             ) : null}
             <Link
-              className="rounded-lg border border-wine px-3 py-2 text-xs font-semibold text-wine hover:bg-wine hover:text-cream"
-              to="/creador"
-            >
-              Creador clásico
-            </Link>
-            <Link
-              className="rounded-lg bg-wine px-3 py-2 text-xs font-semibold text-cream hover:bg-wine-dark"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-wine px-4 py-2.5 text-sm font-semibold text-cream hover:bg-wine-dark sm:min-h-0 sm:px-3 sm:py-2 sm:text-xs"
               to="/"
             >
-              Ver invitación
+              Ver invitación pública
+            </Link>
+            <Link
+              className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-wine px-4 py-2.5 text-sm font-semibold text-wine transition hover:bg-wine hover:text-cream sm:min-h-0 sm:px-3 sm:py-2 sm:text-xs"
+              to="/creador"
+            >
+              Avanzado
             </Link>
           </div>
         </div>

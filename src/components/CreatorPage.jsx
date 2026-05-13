@@ -1,7 +1,43 @@
 import { useEffect, useMemo, useState } from "react"
+import confetti from "canvas-confetti"
 import { Link } from "react-router-dom"
 import { useInvitations } from "../hooks/useInvitations"
-import { fullInviteUrl, invitePath } from "../utils/whatsapp"
+import { fullInviteUrl } from "../utils/whatsapp"
+
+/** Misma celebración que en la invitación pública (lateral inferior, dorado). */
+function fireGoldConfettiBurst() {
+  const duration = 2000
+  const end = Date.now() + duration
+  const goldColors = ["#D4AF37", "#FFDF00", "#DAA520", "#B8860B", "#F3E5AB"]
+  const frame = () => {
+    try {
+      confetti({
+        particleCount: 8,
+        angle: 60,
+        spread: 80,
+        origin: { x: -0.1, y: 0.85 },
+        startVelocity: 65,
+        colors: goldColors,
+        ticks: 200,
+        zIndex: 100,
+      })
+      confetti({
+        particleCount: 8,
+        angle: 120,
+        spread: 80,
+        origin: { x: 1.1, y: 0.85 },
+        startVelocity: 65,
+        colors: goldColors,
+        ticks: 200,
+        zIndex: 100,
+      })
+    } catch {
+      /* canvas-confetti u optimizadores del navegador */
+    }
+    if (Date.now() < end) requestAnimationFrame(frame)
+  }
+  frame()
+}
 
 /** Texto relativo en español para ISO timestamps de KV */
 function formatTimeAgo(iso) {
@@ -68,6 +104,35 @@ function IconHeart({ className }) {
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
     </svg>
   )
+}
+
+function IconPaperclip({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+    </svg>
+  )
+}
+
+/** Tras copiar al portapapeles, activa el mensaje «Enlace copiado» unos segundos. */
+function useFlashCopied(durationMs = 2000) {
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (!copied) return
+    const t = window.setTimeout(() => setCopied(false), durationMs)
+    return () => window.clearTimeout(t)
+  }, [copied, durationMs])
+  return [copied, setCopied]
 }
 
 function IconTrash({ className }) {
@@ -250,19 +315,6 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
           ))}
         </div>
       </div>
-
-      <p className="text-sm leading-relaxed text-wine-dark sm:text-base">
-        <span className="font-semibold">Asistentes estimados (confirmados):</span>{" "}
-        {stats.confirmed} invitado{stats.confirmed !== 1 ? "s" : ""}
-        {stats.plusOneAmongConfirmed > 0 ? (
-          <>
-            {" "}
-            + {stats.plusOneAmongConfirmed} acompañante
-            {stats.plusOneAmongConfirmed !== 1 ? "s" : ""}
-          </>
-        ) : null}{" "}
-        = <strong>{stats.totalAttendees}</strong> persona{stats.totalAttendees !== 1 ? "s" : ""}
-      </p>
     </div>
   )
 }
@@ -346,6 +398,11 @@ function InviteForm({ onSubmit, formError, formKey }) {
 
 function InviteBanner({ invitation, onDismiss }) {
   const [visible, setVisible] = useState(true)
+  const [linkCopied, setLinkCopied] = useFlashCopied()
+
+  useEffect(() => {
+    setLinkCopied(false)
+  }, [invitation?.id, setLinkCopied])
 
   useEffect(() => {
     if (!invitation) return
@@ -368,6 +425,7 @@ function InviteBanner({ invitation, onDismiss }) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
     } catch {
       /* fallback silencioso */
     }
@@ -380,8 +438,26 @@ function InviteBanner({ invitation, onDismiss }) {
       }`}
       role="status"
     >
-      <p className="font-serif text-lg text-wine-dark">
-        Invitación creada para <strong>{invitation.name}</strong>
+      <p className="flex flex-wrap items-center gap-2 font-serif text-lg text-wine-dark">
+        <span>
+          Invitación creada para <strong>{invitation.name}</strong>
+        </span>
+        <span className="inline-flex flex-col items-start gap-0.5 sm:inline-flex">
+          <button
+            type="button"
+            onClick={copy}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-wine/35 bg-white text-wine shadow-sm transition hover:border-wine/55 hover:bg-cream"
+            title="Copiar enlace (boda-lis-juanjo.vercel.app)"
+            aria-label="Copiar enlace de la invitación recién creada"
+          >
+            <IconPaperclip className="h-4 w-4" />
+          </button>
+          {linkCopied ? (
+            <span className="text-xs font-semibold text-emerald-800" role="status">
+              Enlace copiado
+            </span>
+          ) : null}
+        </span>
       </p>
       <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <code className="break-all rounded bg-white/80 px-2 py-1 text-xs text-wine-dark">
@@ -435,7 +511,7 @@ function InviteRow({
   onTogglePlusOne,
   onRemove,
 }) {
-  const path = invitePath(row.slug, row.plusOne)
+  const [linkCopied, setLinkCopied] = useFlashCopied()
   const views = Number(kvRow?.views) || 0
   const clicks = Number(kvRow?.clicks) || 0
   const confirms = Number(kvRow?.confirms) || 0
@@ -447,6 +523,7 @@ function InviteRow({
     const url = fullInviteUrl(row.slug, row.plusOne)
     try {
       await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
     } catch {
       /* ignore */
     }
@@ -459,14 +536,27 @@ function InviteRow({
   return (
     <tr className="border-b border-sand/60 hover:bg-cream/50">
       <td className="px-2 py-2 align-middle">
-        <div className="font-sans text-sm font-medium text-wine-dark">{row.name}</div>
-        <button
-          type="button"
-          onClick={copyPath}
-          className="mt-0.5 break-all text-left font-mono text-xs text-wine/80 underline decoration-wine/30 hover:text-wine"
-        >
-          {path}
-        </button>
+        <div className="min-w-0 max-w-[min(100%,24rem)]">
+          <span className="font-sans text-sm font-medium text-wine-dark">{row.name}</span>
+        </div>
+      </td>
+      <td className="px-2 py-2 align-middle text-center">
+        <div className="flex min-w-[5.75rem] flex-col items-center gap-1">
+          <button
+            type="button"
+            onClick={copyPath}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-wine/35 bg-white text-wine shadow-sm transition hover:border-wine/55 hover:bg-cream"
+            title="Copiar enlace (boda-lis-juanjo.vercel.app)"
+            aria-label={`Copiar enlace de invitación de ${row.name}`}
+          >
+            <IconPaperclip className="h-4 w-4" />
+          </button>
+          {linkCopied ? (
+            <span className="text-[10px] font-semibold leading-tight text-emerald-800" role="status">
+              Enlace copiado
+            </span>
+          ) : null}
+        </div>
       </td>
       <td className="px-2 py-2 align-middle">
         <button
@@ -585,7 +675,7 @@ function InviteMobileCard({
   onTogglePlusOne,
   onRemove,
 }) {
-  const path = invitePath(row.slug, row.plusOne)
+  const [linkCopied, setLinkCopied] = useFlashCopied()
   const views = Number(kvRow?.views) || 0
   const clicks = Number(kvRow?.clicks) || 0
   const confirms = Number(kvRow?.confirms) || 0
@@ -597,6 +687,7 @@ function InviteMobileCard({
     const url = fullInviteUrl(row.slug, row.plusOne)
     try {
       await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
     } catch {
       /* ignore */
     }
@@ -609,16 +700,24 @@ function InviteMobileCard({
   return (
     <article className="border-b border-sand/60 px-3 py-4 last:border-b-0 sm:px-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="font-sans text-sm font-semibold text-wine-dark">{row.name}</p>
-          <button
-            type="button"
-            onClick={copyPath}
-            className="mt-1 max-w-full break-all text-left font-mono text-[11px] leading-snug text-wine/80 underline decoration-wine/30 hover:text-wine"
-          >
-            {path}
-          </button>
-        </div>
+        <p className="min-w-0 flex-1 font-sans text-sm font-semibold text-wine-dark">{row.name}</p>
+        <div className="flex shrink-0 items-start gap-2">
+          <div className="flex flex-col items-center gap-0.5">
+            <button
+              type="button"
+              onClick={copyPath}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-wine/35 bg-white text-wine shadow-sm transition hover:border-wine/55 hover:bg-cream"
+              title="Copiar enlace (boda-lis-juanjo.vercel.app)"
+              aria-label={`Copiar enlace de invitación de ${row.name}`}
+            >
+              <IconPaperclip className="h-4 w-4" />
+            </button>
+            {linkCopied ? (
+              <span className="text-[10px] font-semibold leading-tight text-emerald-800" role="status">
+                Enlace copiado
+              </span>
+            ) : null}
+          </div>
         <button
           type="button"
           onClick={() => onRemove(row.id)}
@@ -627,6 +726,7 @@ function InviteMobileCard({
         >
           <IconTrash className="h-5 w-5" />
         </button>
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -799,7 +899,8 @@ function InviteList({
           <table className="w-full min-w-[640px] border-collapse text-left lg:min-w-[720px]">
           <thead className="sticky top-0 z-10 bg-cream/95 text-xs uppercase tracking-wide text-wine-dark backdrop-blur-sm">
             <tr>
-              <th className="px-2 py-2 font-semibold">Nombre / enlace</th>
+              <th className="px-2 py-2 font-semibold">Nombre</th>
+              <th className="w-28 px-2 py-2 text-center font-semibold">Enlace</th>
               <th className="px-2 py-2 font-semibold">Estado</th>
               <th className="px-2 py-2 font-semibold">Pipeline</th>
               <th className="px-2 py-2 font-semibold">👁 Actividad</th>
@@ -810,7 +911,7 @@ function InviteList({
           <tbody className="font-sans text-sm">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-wine/70">
+                <td colSpan={7} className="px-4 py-8 text-center text-wine/70">
                   No hay invitados que coincidan. Crea uno arriba o cambia el filtro.
                 </td>
               </tr>
@@ -905,6 +1006,7 @@ export default function CreatorPage() {
       return
     }
     setFormKey((k) => k + 1)
+    fireGoldConfettiBurst()
   }
 
   const toggleLinkSent = (id) => {
@@ -933,15 +1035,23 @@ export default function CreatorPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
               <p className="font-serif text-xl leading-snug text-wine-dark sm:text-2xl md:text-3xl">
-                Luisa & Blas · Gestor de invitaciones
+                Lis & Juanjo - Gestor de invitaciones
               </p>
             </div>
-            <Link
-              to="/"
-              className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center rounded-lg border border-wine px-4 py-2.5 text-sm font-semibold text-wine transition hover:bg-white sm:w-auto sm:py-2"
-            >
-              Ver invitación pública
-            </Link>
+            <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <Link
+                to="/"
+                className="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg bg-wine px-4 py-2.5 text-sm font-semibold text-cream transition hover:bg-wine-dark sm:w-auto sm:py-2"
+              >
+                Ver invitación pública
+              </Link>
+              <Link
+                to="/dashboard"
+                className="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg border border-wine px-4 py-2.5 text-sm font-semibold text-wine transition hover:bg-white sm:w-auto sm:py-2"
+              >
+                Avanzado
+              </Link>
+            </div>
           </div>
         </header>
 
