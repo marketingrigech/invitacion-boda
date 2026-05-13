@@ -919,14 +919,14 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
           <FadeInSection className="w-full mb-16 mt-8" delay="400ms">
             <SectionTitleWithOrnament>{guestName !== "Invitado" ? `${guestName.split(" ")[0]}, guárdate este día` : "Guárdate este día"}</SectionTitleWithOrnament>
 
-            {/* Calendario: mismo ancho útil que el resto del contenido */}
-            <div className="mx-auto mb-10 w-full max-w-md">
+            {/* Calendario: object-cover + aspecto cuadrado recorta márgenes horizontales del PNG; el motivo se ve más grande */}
+            <div className="mx-auto mb-8 w-full max-w-xs overflow-hidden rounded-sm aspect-square shadow-[0_2px_12px_rgba(62,42,42,0.06)] sm:max-w-sm md:max-w-md">
               <img
                 src={FECHA_CALENDARIO_SRC}
                 alt="Calendario"
                 loading="lazy"
                 decoding="async"
-                className="block h-auto w-full"
+                className="h-full w-full object-cover object-center"
               />
             </div>
 
@@ -1097,14 +1097,23 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
           {/* CÓDIGO DE VESTIMENTA */}
           <FadeInSection className="w-full mb-16" delay="550ms">
             <SectionTitleWithOrnament>Código de vestimenta</SectionTitleWithOrnament>
-            <div className="max-w-md mx-auto px-4 text-center">
-              <p className="text-lg sm:text-xl text-wine-dark/85 font-serif italic leading-relaxed">
-                <span className="font-semibold not-italic text-wine-dark/90">Dress code:</span> cóctel formal al
-                atardecer.
-              </p>
-              <p className="text-base sm:text-lg text-wine-dark/80 font-serif italic leading-relaxed mt-4">
-                El evento tendrá lugar en zonas de piedra, por lo que recomendamos calzado adecuado.
-              </p>
+            <div className="mx-auto w-full max-w-md px-4">
+              <div className="rounded-sm border border-[#e5d5c5]/90 bg-gradient-to-b from-[#fdfcfa] to-[#f8f4ef] px-6 py-8 text-center shadow-[0_6px_28px_rgba(71,20,33,0.07)] sm:px-9 sm:py-10">
+                <p className="font-sans text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-wine/75">
+                  Dress code
+                </p>
+                <p className="mt-3 font-serif text-[1.2rem] font-light italic leading-snug tracking-[0.02em] text-wine-dark sm:text-[1.35rem] sm:leading-[1.35]">
+                  Cóctel formal al atardecer.
+                </p>
+                <div
+                  className="mx-auto mt-6 max-w-[12rem] border-t border-wine/15 pt-6"
+                  aria-hidden
+                />
+                <p className="font-serif text-sm leading-relaxed text-wine-dark/60 sm:text-[0.95rem]">
+                  El evento tendrá lugar en zonas de piedra, por lo que recomendamos calzado
+                  adecuado.
+                </p>
+              </div>
             </div>
           </FadeInSection>
 
