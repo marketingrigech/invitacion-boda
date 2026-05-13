@@ -896,7 +896,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
             <div className={fotoMarcoInvitacion}>
               <img
-                src="/boda/historia-parte.png"
+                src="/boda/d0e41918-df85-4a43-bef6-9646831e9ddc.png"
                 alt="Sé parte de nuestra historia"
                 loading="lazy"
                 decoding="async"
