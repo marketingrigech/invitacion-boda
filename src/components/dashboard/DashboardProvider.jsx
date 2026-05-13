@@ -85,34 +85,58 @@ export default function DashboardProvider({ children }) {
   /** @type {'idle'|'savingTables'|'savingTasks'} */
   const [saveState, setSaveState] = useState("idle")
 
+  /** @type {string|null} mensaje cuando fallo guardando mesas/tareas en KV */
+  const [persistError, setPersistError] = useState(null)
+
+  /** @type {{ tables: boolean, tasks: boolean }} */
+  const [loadWarnings, setLoadWarnings] = useState({
+    tables: false,
+    tasks: false,
+  })
+
   useEffect(() => {
     fetch("/api/tables")
-      .then((r) => (r.ok ? r.json() : {}))
+      .then((r) => {
+        if (!r.ok) throw new Error("tables http")
+        return r.json()
+      })
       .then((d) =>
         Array.isArray(d.tables) ? setTables(d.tables) : setTables([]),
       )
-      .catch(() => setTables([]))
+      .catch(() => {
+        setTables([])
+        setLoadWarnings((w) => ({ ...w, tables: true }))
+      })
 
     fetch("/api/tasks")
-      .then((r) => (r.ok ? r.json() : {}))
+      .then((r) => {
+        if (!r.ok) throw new Error("tasks http")
+        return r.json()
+      })
       .then(async (d) => {
         let list = Array.isArray(d.tasks) ? d.tasks : []
         if (list.length === 0) {
           list = buildTaskSeedList()
           try {
-            await fetch("/api/tasks", {
+            const rr = await fetch("/api/tasks", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ tasks: list }),
             })
+            if (!rr.ok) throw new Error("seed tasks rejected")
           } catch {
-            /* noop */
+            setLoadWarnings((w) => ({ ...w, tasks: true }))
           }
         }
         setTasks(list)
       })
-      .catch(() => setTasks([]))
+      .catch(() => {
+        setTasks([])
+        setLoadWarnings((w) => ({ ...w, tasks: true }))
+      })
   }, [])
+
+  const dismissPersistError = useCallback(() => setPersistError(null), [])
 
   const loadAnalytics = useCallback(() => {
     fetch("/api/analytics")
@@ -155,13 +179,22 @@ export default function DashboardProvider({ children }) {
     setTables(next)
     setSaveState("savingTables")
     try {
-      await fetch("/api/tables", {
+      const r = await fetch("/api/tables", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tables: next }),
       })
+      if (!r.ok) {
+        setPersistError(
+          "No se pudo guardar las mesas en el servidor (recarga tras unos segundos o revisa tu conexión).",
+        )
+      } else {
+        setPersistError(null)
+      }
     } catch {
-      /* noop */
+      setPersistError(
+        "La red ha fallado al guardar mesas; lo que ves en pantalla puede no estar copiado al servidor.",
+      )
     } finally {
       setSaveState("idle")
     }
@@ -171,13 +204,22 @@ export default function DashboardProvider({ children }) {
     setTasks(next)
     setSaveState("savingTasks")
     try {
-      await fetch("/api/tasks", {
+      const r = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tasks: next }),
       })
+      if (!r.ok) {
+        setPersistError(
+          "No se pudo guardar la checklist en el servidor (reintenta o revisa tu conexión).",
+        )
+      } else {
+        setPersistError(null)
+      }
     } catch {
-      /* noop */
+      setPersistError(
+        "La red ha fallado al guardar las tareas; lo que ves en pantalla puede no estar copiado al servidor.",
+      )
     } finally {
       setSaveState("idle")
     }
@@ -431,6 +473,9 @@ export default function DashboardProvider({ children }) {
       refreshInvitationsFromServer,
       loadAnalytics,
       saveState,
+      persistError,
+      dismissPersistError,
+      loadWarnings,
     }),
     [
       invitationRest,
@@ -452,6 +497,9 @@ export default function DashboardProvider({ children }) {
       refreshInvitationsFromServer,
       loadAnalytics,
       saveState,
+      persistError,
+      dismissPersistError,
+      loadWarnings,
     ],
   )
 

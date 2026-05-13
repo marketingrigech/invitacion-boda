@@ -1,6 +1,11 @@
 import { kv } from "@vercel/kv"
+import {
+  WEDDING_INVITATIONS_KV_KEY,
+  kvCasSetInvitationBlob,
+  withInvitationCAS,
+} from "./lib/kv-invitation-store.js"
 
-const KEY = "crm:wedding_invitations"
+const KEY = WEDDING_INVITATIONS_KV_KEY
 const MAX_GUESTS = 400
 
 const MENU_VALUES = new Set(["", "carne", "pescado", "vegetariano", "infantil"])
@@ -131,10 +136,21 @@ export default async function handler(req, res) {
         .filter(isValidRow)
         .map((r) => sanitizeInvitationRow(/** @type {Record<string, unknown>} */ (r)))
         .slice(0, MAX_GUESTS)
-      await kv.set(KEY, JSON.stringify(clean))
+      const serialized = JSON.stringify(clean)
+
+      await withInvitationCAS(async (expectedRaw) => {
+        const ok = await kvCasSetInvitationBlob(kv, KEY, expectedRaw, serialized)
+        if (ok) return { ok: true, value: undefined }
+        return { ok: false, retry: true }
+      })
+
       res.status(200).json({ ok: true })
     } catch (e) {
       console.error("[guests POST]", e)
+      if (/** @type {Error} */ (e)?.message === "invitation_kv_exhausted") {
+        res.status(503).json({ ok: false, error: "busy" })
+        return
+      }
       res.status(500).json({ ok: false })
     }
     return

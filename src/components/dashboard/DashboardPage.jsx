@@ -33,7 +33,12 @@ export default function DashboardPage() {
   const [activeHash, setActiveHash] = useState(() =>
     typeof window !== "undefined" ? tabFromLocationHash().hash : TABS[0].hash,
   )
-  const { saveState } = useDashboard()
+  const {
+    saveState,
+    persistError,
+    dismissPersistError,
+    loadWarnings,
+  } = useDashboard()
 
   useEffect(() => {
     const sync = () => setActiveHash(tabFromLocationHash().hash)
@@ -56,6 +61,11 @@ export default function DashboardPage() {
         ? "Guardando tareas…"
         : null
 
+  const loadIssue =
+    loadWarnings.tables || loadWarnings.tasks
+      ? "No pudimos cargar mesas y/o checklist desde el servidor la primera vez. Comprueba la conexión o recarga la página."
+      : null
+
   /** @param {typeof TABS[number]} tab */
   const go = (tab) => {
     window.location.hash = tab.hash.slice(1)
@@ -66,6 +76,29 @@ export default function DashboardPage() {
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(to_bottom,#EFEBE8_0%,#f8f4ef_55%,#EFEBE8_100%)]" />
 
       <header className="no-print relative border-b border-wine/25 bg-white/92 px-4 py-4 backdrop-blur-md md:px-8">
+        {(persistError || loadIssue) ? (
+          <div
+            className="mx-auto mb-4 flex max-w-6xl flex-col gap-2 rounded-lg border border-amber-600/35 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+            role="status"
+          >
+            {persistError ? <p>{persistError}</p> : null}
+            {loadIssue ? (
+              <p className={persistError ? "text-amber-900/95" : ""}>{loadIssue}</p>
+            ) : null}
+            {persistError ? (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="rounded-md border border-amber-800/40 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-amber-950 hover:bg-amber-100"
+                  onClick={dismissPersistError}
+                >
+                  Cerrar este aviso
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="font-serif text-xl leading-snug text-wine-dark sm:text-2xl md:text-3xl">

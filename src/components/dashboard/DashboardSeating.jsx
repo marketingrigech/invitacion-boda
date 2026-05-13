@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { downloadCsv, toCsv } from "../../utils/csv"
 import FadeInSection from "../shared/FadeInSection"
+import DeleteTableConfirmModal from "./DeleteTableConfirmModal"
 import { useDashboard } from "./DashboardProvider"
 
 const VB_W = 1600
@@ -280,6 +281,20 @@ export default function DashboardSeating() {
   const [mapMoveHover, setMapMoveHover] = useState(
     /** @type {null | { tableId: string; slot: number }} */ (null),
   )
+  /** Arrastre desde bolita en táctil (pulsación larga + soltar en otro asiento). */
+  const [seatBlobDrag, setSeatBlobDrag] = useState(
+    /** @type {null | { invitationId: string; role: 'titular' | 'plusOne'; fromTableId: string; fromSlot: number; x: number; y: number; label: string }} */ (
+      null
+    ),
+  )
+  /** @type {React.MutableRefObject<{ pointerId: number; startX: number; startY: number; timer: number; target: Element } | null>} */
+  const seatTouchPressRef = useRef(null)
+  /** Limpia listeners globales del arrastre táctil (también Esc). */
+  const touchDragListenersRef = useRef(/** @type {null | (() => void)} */ (null))
+  /** Tras arrastrar, evitar que dispare el modo «clic para mover». */
+  const suppressSeatClickUntilRef = useRef(0)
+  /** @type {React.MutableRefObject<(clientX: number, clientY: number) => null | { tableId: string; slot: number }>} */
+  const findSeatSlotAtClientRef = useRef(() => /** @type {null | { tableId: string; slot: number }} */ (null))
   /** Edición de la mesa seleccionada en el panel derecho */
   const [editTableName, setEditTableName] = useState("")
   const [editTableCap, setEditTableCap] = useState("10")
@@ -293,10 +308,19 @@ export default function DashboardSeating() {
   /** Menú compacto (exportar / imprimir) junto al título del canvas */
   const [canvasMenuOpen, setCanvasMenuOpen] = useState(false)
   const canvasMenuRef = useRef(/** @type {HTMLDivElement | null} */ (null))
+  const [deleteTableModal, setDeleteTableModal] = useState(
+    /** @type {null | { id: string; name: string; guestCount: number }} */ (null),
+  )
 
   useEffect(() => {
     function onEsc(e) {
       if (e.key !== "Escape") return
+      touchDragListenersRef.current?.()
+      touchDragListenersRef.current = null
+      const pr = seatTouchPressRef.current
+      if (pr?.timer) window.clearTimeout(pr.timer)
+      seatTouchPressRef.current = null
+      setSeatBlobDrag(null)
       setMapMovePick(null)
       setMapMoveHover(null)
       setSeatHoverTip(null)
@@ -345,17 +369,23 @@ export default function DashboardSeating() {
 
   useEffect(() => {
     setListPulseKey(null)
+    touchDragListenersRef.current?.()
+    touchDragListenersRef.current = null
+    const pr = seatTouchPressRef.current
+    if (pr?.timer) window.clearTimeout(pr.timer)
+    seatTouchPressRef.current = null
+    setSeatBlobDrag(null)
     setMapMovePick(null)
     setMapMoveHover(null)
     setSeatHoverTip(null)
   }, [guestQuery, guestListTab])
 
   useEffect(() => {
-    if (!mapMovePick) setMapMoveHover(null)
+    if (!mapMovePick && !seatBlobDrag) setMapMoveHover(null)
     return () => {
       window.clearTimeout(mapMoveHoverClearRef.current)
     }
-  }, [mapMovePick])
+  }, [mapMovePick, seatBlobDrag])
 
   useEffect(() => {
     if (!canvasMenuOpen) return
@@ -761,14 +791,7 @@ export default function DashboardSeating() {
   }
 
   /** @param {string} id */
-  const removeTable = (id) => {
-    const g = guestsAt(id)
-    if (g.length > 0) {
-      const ok = window.confirm(
-        `Hay ${g.length} invitación(es) en esta mesa. Se quitarán del plano (titular y acompañantes).`,
-      )
-      if (!ok) return
-    }
+  const executeRemoveTable = (id) => {
     persistInvitations((prev) =>
       prev.map((inv) => {
         let next = { ...inv }
@@ -794,6 +817,16 @@ export default function DashboardSeating() {
     )
     saveTablesToServer(tables.filter((t) => t.id !== id))
     setSelectedTableId((s) => (s === id ? null : s))
+  }
+
+  /** Abre el modal de confirmación antes de borrar la mesa. */
+  const requestRemoveTable = (id) => {
+    const t = tables.find((x) => x.id === id)
+    setDeleteTableModal({
+      id,
+      name: t?.name?.trim() || "Mesa",
+      guestCount: guestsAt(id).length,
+    })
   }
 
   /** Drag desde la lista izquierda o panel de ocupantes: marca titular vs +1 */
@@ -875,6 +908,44 @@ export default function DashboardSeating() {
     return { cx: live.x, cy: live.y }
   }
 
+  /** ¿Hay un hueco de asiento bajo el puntero (coords pantalla)? */
+  const findSeatSlotAtClient = useCallback(
+    (clientX, clientY) => {
+      const svg = svgRef.current
+      if (!svg) return null
+      const p = svgPoint(svg, clientX, clientY)
+      const HIT_R = 54
+      let best = /** @type {null | { tableId: string; slot: number }} */ (null)
+      let bestD = Infinity
+      for (const tbl of tables) {
+        const shape = tbl.shape ?? "round"
+        const { orbitX, orbitY } = tableGeom(tbl, shape)
+        const cap = tbl.capacity
+        const { cx, cy } = posOf(tbl)
+        const rotDeg = tbl.rotation ?? 0
+        const rad = (rotDeg * Math.PI) / 180
+        const cos = Math.cos(rad)
+        const sin = Math.sin(rad)
+        for (let slot = 0; slot < cap; slot++) {
+          const θ = -Math.PI / 2 + (slot * 2 * Math.PI) / Math.max(cap, 1)
+          const sx = orbitX * Math.cos(θ)
+          const sy = orbitY * Math.sin(θ)
+          const wx = cx + sx * cos - sy * sin
+          const wy = cy + sx * sin + sy * cos
+          const d = Math.hypot(p.x - wx, p.y - wy)
+          if (d < HIT_R && d < bestD) {
+            bestD = d
+            best = { tableId: tbl.id, slot }
+          }
+        }
+      }
+      return best
+    },
+    [tables, tableLive],
+  )
+
+  findSeatSlotAtClientRef.current = findSeatSlotAtClient
+
   const mapMoveBannerLine = useMemo(() => {
     if (!mapMovePick) return null
     const g = seatableInvitations.find((x) => x.id === mapMovePick.invitationId)
@@ -886,6 +957,18 @@ export default function DashboardSeating() {
     const who = seatPrimaryLine(g, "plusOne")
     return `«${who}» · clic destino para mover · × o «Quitar» para quitar +1 · Esc`
   }, [mapMovePick, seatableInvitations])
+
+  const seatBlobDragBannerLine = useMemo(() => {
+    if (!seatBlobDrag) return null
+    const g = seatableInvitations.find((x) => x.id === seatBlobDrag.invitationId)
+    if (!g) return "Suelta en otro asiento · Esc para cancelar"
+    if (seatBlobDrag.role === "titular") {
+      const n = g.name?.trim() || "—"
+      return `«${n}» · arrastra y suelta en otro asiento · Esc`
+    }
+    const who = seatPrimaryLine(g, "plusOne")
+    return `«${who}» · suelta en otro asiento · Esc`
+  }, [seatBlobDrag, seatableInvitations])
 
   const mapViewBox = useMemo(() => {
     const w = VB_W / mapView.zoom
@@ -996,6 +1079,12 @@ export default function DashboardSeating() {
       }
       if (e.pointerType === "mouse" && e.button === 0 && !spacePan) {
         setSelectedTableId(null)
+        touchDragListenersRef.current?.()
+        touchDragListenersRef.current = null
+        const pr = seatTouchPressRef.current
+        if (pr?.timer) window.clearTimeout(pr.timer)
+        seatTouchPressRef.current = null
+        setSeatBlobDrag(null)
         setMapMovePick(null)
         setMapMoveHover(null)
       }
@@ -1007,6 +1096,7 @@ export default function DashboardSeating() {
   const handleSeatMapClick =
     (tblId, slot, occupant) => (/** @type {React.MouseEvent<SVGCircleElement>} */ e) => {
       e.stopPropagation()
+      if (Date.now() < suppressSeatClickUntilRef.current) return
       if (occupant) {
         const same =
           mapMovePick &&
@@ -1753,6 +1843,12 @@ export default function DashboardSeating() {
             </div>
           ) : null}
 
+          {seatBlobDrag && seatBlobDragBannerLine ? (
+            <div className="no-print sticky top-0 z-20 mx-2 mb-1 mt-2 flex flex-shrink-0 flex-wrap items-center gap-2 rounded-lg border border-sky-600/45 bg-sky-50 px-3 py-2 text-xs font-medium text-sky-950 shadow-sm">
+              <span className="min-w-0 flex-1 leading-snug">{seatBlobDragBannerLine}</span>
+            </div>
+          ) : null}
+
           <div className="relative min-h-0 flex-1 overflow-auto overscroll-contain">
             <svg
               ref={svgRef}
@@ -1943,18 +2039,28 @@ export default function DashboardSeating() {
                     const tipTable = tbl.name
                     const slotHuman = String(slot + 1)
                     const seatPickSource =
-                      mapMovePick &&
+                      (mapMovePick &&
+                        mapMovePick.fromTableId === tbl.id &&
+                        mapMovePick.fromSlot === slot) ||
+                      (seatBlobDrag &&
+                        seatBlobDrag.fromTableId === tbl.id &&
+                        seatBlobDrag.fromSlot === slot)
+
+                    const fromMapMoveSource =
+                      !!mapMovePick &&
                       mapMovePick.fromTableId === tbl.id &&
                       mapMovePick.fromSlot === slot
+                    const fromBlobDragSource =
+                      !!seatBlobDrag &&
+                      seatBlobDrag.fromTableId === tbl.id &&
+                      seatBlobDrag.fromSlot === slot
 
                     const isMovePreview =
-                      !!mapMovePick &&
+                      !!(mapMovePick || seatBlobDrag) &&
                       mapMoveHover?.tableId === tbl.id &&
                       mapMoveHover.slot === slot &&
-                      !(
-                        mapMovePick.fromTableId === tbl.id &&
-                        mapMovePick.fromSlot === slot
-                      )
+                      !fromMapMoveSource &&
+                      !fromBlobDragSource
 
                     const hoverTitleSvg = occupant
                       ? seatHoverFullTitle(
@@ -1963,9 +2069,11 @@ export default function DashboardSeating() {
                           tipTable,
                           slotHuman,
                         )
-                      : mapMovePick
-                        ? `Clic aquí · Asiento ${slotHuman} · ${tipTable} (destino)`
-                        : `Asiento libre ${slotHuman} · ${tipTable}`
+                      : seatBlobDrag
+                        ? `Suelta aquí · Asiento ${slotHuman} · ${tipTable}`
+                        : mapMovePick
+                          ? `Clic aquí · Asiento ${slotHuman} · ${tipTable} (destino)`
+                          : `Asiento libre ${slotHuman} · ${tipTable}`
 
                     return (
                       <g key={slot}>
@@ -2058,7 +2166,13 @@ export default function DashboardSeating() {
                             cy={sy}
                             r={52}
                             fill="none"
-                            stroke="#d97706"
+                            stroke={
+                              seatBlobDrag &&
+                              seatBlobDrag.fromTableId === tbl.id &&
+                              seatBlobDrag.fromSlot === slot
+                                ? "#0284c7"
+                                : "#d97706"
+                            }
                             strokeWidth={2.75}
                             strokeDasharray="7 4"
                             className="pointer-events-none seat-map-blink-ring"
@@ -2089,25 +2203,212 @@ export default function DashboardSeating() {
                           cy={sy}
                           r={48}
                           fill="transparent"
-                          className={occupant ? "cursor-pointer" : "cursor-copy"}
+                          className={
+                            occupant
+                              ? mapMovePick
+                                ? "cursor-pointer"
+                                : "cursor-grab active:cursor-grabbing"
+                              : "cursor-copy"
+                          }
                           style={{ pointerEvents: "auto" }}
+                          draggable={!!occupant}
+                          onDragStart={
+                            occupant
+                              ? (e) => {
+                                  e.stopPropagation()
+                                  handleDragStartSeatNeeder(
+                                    occupant.inv.id,
+                                    occupant.role,
+                                  )(e)
+                                }
+                              : undefined
+                          }
+                          onDragEnd={() => {
+                            suppressSeatClickUntilRef.current = Date.now() + 320
+                            setMapMoveHover(null)
+                          }}
                           onDragOver={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
                           }}
                           onDrop={droppable(slot)}
                           onMouseDown={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => {
+                            if (!occupant) return
+                            if (e.pointerType === "mouse") return
+                            if (e.button !== 0) return
+                            const prev = seatTouchPressRef.current
+                            if (prev?.timer) window.clearTimeout(prev.timer)
+                            const target = e.currentTarget
+                            const pointerId = e.pointerId
+                            const startX = e.clientX
+                            const startY = e.clientY
+                            const invId = occupant.inv.id
+                            const role = occupant.role
+                            const fromTableId = tbl.id
+                            const fromSlot = slot
+                            const timer = window.setTimeout(() => {
+                              seatTouchPressRef.current = null
+                              try {
+                                target.setPointerCapture(pointerId)
+                              } catch {
+                                /* ignore */
+                              }
+                              setMapMovePick(null)
+                              setMapMoveHover(null)
+                              suppressSeatClickUntilRef.current =
+                                Date.now() + 900
+                              setSeatBlobDrag({
+                                invitationId: invId,
+                                role,
+                                fromTableId,
+                                fromSlot,
+                                x: startX,
+                                y: startY,
+                                label: guestSeatLetter(
+                                  occupant.inv,
+                                  occupant.role,
+                                ),
+                              })
+                              const payload = {
+                                pointerId,
+                                target,
+                                invitationId: invId,
+                                role,
+                                fromTableId,
+                                fromSlot,
+                              }
+                              const removeListeners = () => {
+                                window.removeEventListener(
+                                  "pointermove",
+                                  onMove,
+                                )
+                                window.removeEventListener(
+                                  "pointerup",
+                                  onEnd,
+                                )
+                                window.removeEventListener(
+                                  "pointercancel",
+                                  onEnd,
+                                )
+                                touchDragListenersRef.current = null
+                                try {
+                                  target.releasePointerCapture(pointerId)
+                                } catch {
+                                  /* ignore */
+                                }
+                              }
+                              touchDragListenersRef.current = removeListeners
+                              const onMove = (ev) => {
+                                if (ev.pointerId !== pointerId) return
+                                setSeatBlobDrag((d) =>
+                                  d
+                                    ? {
+                                        ...d,
+                                        x: ev.clientX,
+                                        y: ev.clientY,
+                                      }
+                                    : null,
+                                )
+                                const hit = findSeatSlotAtClientRef.current(
+                                  ev.clientX,
+                                  ev.clientY,
+                                )
+                                if (
+                                  hit &&
+                                  (hit.tableId !== fromTableId ||
+                                    hit.slot !== fromSlot)
+                                )
+                                  setMapMoveHover({
+                                    tableId: hit.tableId,
+                                    slot: hit.slot,
+                                  })
+                                else setMapMoveHover(null)
+                              }
+                              const onEnd = (ev) => {
+                                if (ev.pointerId !== pointerId) return
+                                removeListeners()
+                                const hit = findSeatSlotAtClientRef.current(
+                                  ev.clientX,
+                                  ev.clientY,
+                                )
+                                if (
+                                  hit &&
+                                  (hit.tableId !== fromTableId ||
+                                    hit.slot !== fromSlot)
+                                )
+                                  assignGuestSeat(
+                                    payload.invitationId,
+                                    hit.tableId,
+                                    hit.slot,
+                                    payload.role,
+                                  )
+                                setSeatBlobDrag(null)
+                                setMapMoveHover(null)
+                              }
+                              window.addEventListener("pointermove", onMove)
+                              window.addEventListener("pointerup", onEnd)
+                              window.addEventListener(
+                                "pointercancel",
+                                onEnd,
+                              )
+                            }, 420)
+                            seatTouchPressRef.current = {
+                              pointerId,
+                              startX,
+                              startY,
+                              timer,
+                              target,
+                            }
+                          }}
+                          onPointerUp={(e) => {
+                            const pr = seatTouchPressRef.current
+                            if (
+                              pr &&
+                              e.pointerId === pr.pointerId &&
+                              pr.timer
+                            ) {
+                              window.clearTimeout(pr.timer)
+                              seatTouchPressRef.current = null
+                            }
+                          }}
+                          onPointerCancel={(e) => {
+                            const pr = seatTouchPressRef.current
+                            if (
+                              pr &&
+                              e.pointerId === pr.pointerId &&
+                              pr.timer
+                            ) {
+                              window.clearTimeout(pr.timer)
+                              seatTouchPressRef.current = null
+                            }
+                          }}
                           onPointerEnter={(e) => {
                             setSeatHoverTip({
                               x: e.clientX,
                               y: e.clientY,
                               text: hoverTitleSvg,
                             })
-                            if (!mapMovePick) return
+                            if (!mapMovePick && !seatBlobDrag) return
                             window.clearTimeout(mapMoveHoverClearRef.current)
                             setMapMoveHover({ tableId: tbl.id, slot })
                           }}
                           onPointerMove={(e) => {
+                            const pr = seatTouchPressRef.current
+                            if (
+                              pr &&
+                              e.pointerId === pr.pointerId &&
+                              pr.timer
+                            ) {
+                              const d = Math.hypot(
+                                e.clientX - pr.startX,
+                                e.clientY - pr.startY,
+                              )
+                              if (d > 14) {
+                                window.clearTimeout(pr.timer)
+                                seatTouchPressRef.current = null
+                              }
+                            }
                             setSeatHoverTip((prev) =>
                               prev
                                 ? {
@@ -2190,9 +2491,31 @@ export default function DashboardSeating() {
             </div>
           ) : null}
 
+          {seatBlobDrag ? (
+            <div
+              aria-hidden
+              className="no-print pointer-events-none fixed z-[110] flex h-14 w-14 items-center justify-center rounded-full border-2 border-white text-lg font-bold text-white shadow-xl"
+              style={{
+                left: seatBlobDrag.x - 28,
+                top: seatBlobDrag.y - 28,
+                touchAction: "none",
+                backgroundColor: (() => {
+                  const dg = seatableInvitations.find(
+                    (i) => i.id === seatBlobDrag.invitationId,
+                  )
+                  return dg
+                    ? seatBlobFill(dg, seatBlobDrag.role)
+                    : "#0369a1"
+                })(),
+              }}
+            >
+              {seatBlobDrag.label}
+            </div>
+          ) : null}
+
           {tables.length === 0 ? (
             <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-wine/60 no-print">
-              Añade una mesa y arrastra invitados a los asientos verdes.
+              Añade una mesa y arrastra invitados a los asientos verdes. En bolitas ocupadas puedes arrastrar con el ratón o mantener pulsado (móvil) y soltar en otro asiento.
             </p>
           ) : null}
           </div>
@@ -2229,7 +2552,7 @@ export default function DashboardSeating() {
                     className="rounded-lg p-1.5 text-red-700 hover:bg-red-50"
                     title="Eliminar mesa"
                     aria-label="Eliminar mesa"
-                    onClick={() => removeTable(selectedTableId)}
+                    onClick={() => requestRemoveTable(selectedTableId)}
                   >
                     <svg
                       className="h-4 w-4"
@@ -2473,6 +2796,18 @@ export default function DashboardSeating() {
           )}
         </FadeInSection>
       </div>
+
+      <DeleteTableConfirmModal
+        open={Boolean(deleteTableModal)}
+        tableName={deleteTableModal?.name ?? ""}
+        guestCount={deleteTableModal?.guestCount ?? 0}
+        onCancel={() => setDeleteTableModal(null)}
+        onConfirm={() => {
+          if (!deleteTableModal) return
+          executeRemoveTable(deleteTableModal.id)
+          setDeleteTableModal(null)
+        }}
+      />
     </div>
   )
 }
