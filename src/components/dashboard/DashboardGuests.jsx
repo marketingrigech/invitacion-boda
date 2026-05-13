@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { formatTimeAgo } from "../../utils/formatTimeAgo"
-import { fullInviteUrl, invitePath, openWhatsAppInviteForGuest } from "../../utils/whatsapp"
+import { fullInviteUrl, openWhatsAppInviteForGuest } from "../../utils/whatsapp"
 import { useDashboard } from "./DashboardProvider"
 import EditGuestModal from "./EditGuestModal"
 import QrModal from "./QrModal"
@@ -213,7 +213,7 @@ export default function DashboardGuests() {
 
   const copyPath = async (row) => {
     try {
-      await navigator.clipboard.writeText(invitePath(row.slug, row.plusOne))
+      await navigator.clipboard.writeText(fullInviteUrl(row.slug, row.plusOne))
     } catch {
       /* ignore */
     }

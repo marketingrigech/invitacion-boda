@@ -1,11 +1,11 @@
+/** Dominio público de la invitación (enlaces WhatsApp, QR, copiar). Override: VITE_PUBLIC_INVITE_URL */
+const CANONICAL_PUBLIC_INVITE_ORIGIN = "https://boda-lis-juanjo.vercel.app"
+
 /** @returns {string} */
 export function getPublicInviteOrigin() {
   const env = /** @type {unknown} */ (import.meta.env.VITE_PUBLIC_INVITE_URL)
   if (typeof env === "string" && env.trim().length > 0) return env.replace(/\/$/, "")
-  if (typeof window !== "undefined" && window.location?.origin) {
-    return window.location.origin.replace(/\/$/, "")
-  }
-  return "https://boda-lis-juanjo.vercel.app"
+  return CANONICAL_PUBLIC_INVITE_ORIGIN
 }
 
 /**

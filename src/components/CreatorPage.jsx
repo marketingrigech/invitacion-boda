@@ -1,17 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useInvitations } from "../hooks/useInvitations"
-
-const PUBLIC_INVITE_DOMAIN = "https://boda-lis-juanjo.vercel.app"
-
-function invitePath(slug, plusOne) {
-  const suffix = plusOne ? "+1" : ""
-  return `/${slug}${suffix}`
-}
-
-function fullInviteUrl(slug, plusOne) {
-  return `${PUBLIC_INVITE_DOMAIN}${invitePath(slug, plusOne)}`
-}
+import { fullInviteUrl, invitePath } from "../utils/whatsapp"
 
 /** Texto relativo en español para ISO timestamps de KV */
 function formatTimeAgo(iso) {

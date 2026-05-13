@@ -3,6 +3,7 @@ import confetti from "canvas-confetti"
 import ImageLightbox from "./ImageLightbox"
 import FadeInSection from "./shared/FadeInSection"
 import { extractSlugFromLocation } from "../utils/slugFromPath"
+import { getPublicInviteOrigin } from "../utils/whatsapp"
 
 /**
  * Lee el nombre del invitado y si viene con acompañante desde la URL.
@@ -1225,9 +1226,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                     aria-label="Descargar archivo de calendario (.ics)"
                     title="Apple y otros (.ics)"
                     onClick={() =>
-                      downloadWeddingCalendarReminder(
-                        typeof window !== "undefined" ? window.location.origin : "",
-                      )
+                      downloadWeddingCalendarReminder(getPublicInviteOrigin())
                     }
                     className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full border border-wine/30 bg-white/70 text-wine-dark/85 shadow-sm transition-colors hover:border-wine/55 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/35 focus-visible:ring-offset-2"
                   >
