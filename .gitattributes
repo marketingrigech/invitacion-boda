@@ -1,0 +1,7 @@
+# Imágenes y assets binarios: sin conversión de fin de línea (evita archivos corruptos en clone/checkout).
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.gif  binary
+*.ico  binary
