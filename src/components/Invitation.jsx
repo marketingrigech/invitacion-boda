@@ -1134,7 +1134,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 <span className="font-bold tracking-wide sm:tracking-wider mt-2 inline-block font-mono text-sm sm:text-base md:text-lg text-wine">
                   ES42&nbsp;0182&nbsp;5322&nbsp;2802&nbsp;0868&nbsp;6251
                 </span>
-                <span className="mt-3 block text-left">
+                <span className="mt-3 block text-center">
                   SWIFT/BIC:{" "}
                   <span className="font-bold tracking-wide font-mono text-sm sm:text-base md:text-lg text-wine">
                     BBVAESMM
