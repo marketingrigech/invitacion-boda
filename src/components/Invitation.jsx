@@ -1132,7 +1132,13 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                 Titulares: Lis & Juanjo<br />
                 IBAN:{" "}
                 <span className="font-bold tracking-wide sm:tracking-wider mt-2 inline-block font-mono text-sm sm:text-base md:text-lg text-wine">
-                  ES76&nbsp;0073&nbsp;0100&nbsp;5504&nbsp;6566&nbsp;5778
+                  ES42&nbsp;0182&nbsp;5322&nbsp;2802&nbsp;0868&nbsp;6251
+                </span>
+                <span className="mt-3 block text-left">
+                  SWIFT/BIC:{" "}
+                  <span className="font-bold tracking-wide font-mono text-sm sm:text-base md:text-lg text-wine">
+                    BBVAESMM
+                  </span>
                 </span>
                 <p className="mt-4 border-t border-wine/15 pt-3 text-center text-base sm:text-lg text-wine-dark/75 font-serif italic leading-relaxed break-normal">
                   También se acepta dinero en efectivo y sobre con amor 💌
