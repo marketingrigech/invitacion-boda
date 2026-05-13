@@ -1140,7 +1140,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
                     BBVAESMM
                   </span>
                 </span>
-                <p className="mt-4 border-t border-wine/15 pt-3 text-center text-base sm:text-lg text-black font-[Arial,Helvetica,sans-serif] not-italic leading-relaxed break-normal">
+                <p className="mt-4 border-t border-wine/15 pt-3 text-center text-[12px] text-black font-[Arial,Helvetica,sans-serif] not-italic leading-snug break-normal">
                   También se acepta dinero en efectivo y sobre con amor 💌
                 </p>
               </div>
