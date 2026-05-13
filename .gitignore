@@ -7,6 +7,9 @@ dist/
 # Vite cache
 .vite/
 
+# CRM simulado en `npm run dev` sin proxy (opcional ignorar datos de prueba)
+.vite-dev-api.json
+
 # Local env files
 .env
 .env.local

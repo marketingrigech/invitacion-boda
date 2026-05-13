@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import confetti from "canvas-confetti"
 import ImageLightbox from "./ImageLightbox"
+import FadeInSection from "./shared/FadeInSection"
+import { extractSlugFromLocation } from "../utils/slugFromPath"
 
 /**
  * Lee el nombre del invitado y si viene con acompañante desde la URL.
@@ -86,6 +88,20 @@ const VENUE_FINCA_CAROUSEL_URLS = (() => {
 
 /** WhatsApp en formato internacional sin + ni espacios (confirmaciones de asistencia). */
 const RSVP_WHATSAPP_PHONE = "34655935191"
+
+/** Valores persistidos también en KV /api/rsvp — coherencia con servidor. */
+const MENU_OPTIONS = /** @type {const} */ ([
+  ["carne", "Carne"],
+  ["pescado", "Pescado"],
+  ["vegetariano", "Vegetariano"],
+  ["infantil", "Menú infantil"],
+])
+
+/** @param {string} menuValue */
+function menuHumanLabel(menuValue) {
+  const row = MENU_OPTIONS.find(([value]) => value === menuValue)
+  return row ? row[1] : menuValue
+}
 
 /** Marco fotos dentro del interior de la tarjeta (sin bleed; alineado al texto). */
 const fotoMarcoInvitacion =
@@ -458,39 +474,7 @@ function SectionTitleWithOrnament({ children, className = "", dense = false }) {
   );
 }
 
-function FadeInSection({ children, className = "", delay = "0ms", observerRoot = null }) {
-  const domRef = useRef()
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible")
-          }
-        })
-      },
-      {
-        root: observerRoot,
-        threshold: 0.08,
-        rootMargin: "0px 0px -12px 0px",
-      },
-    )
-
-    const currentRef = domRef.current
-    if (currentRef) observer.observe(currentRef)
-    return () => {
-      if (currentRef) observer.unobserve(currentRef)
-    }
-  }, [observerRoot])
-
-  return (
-    <div className={`fade-in-section ${className}`} ref={domRef} style={{ transitionDelay: delay }}>
-      {children}
-    </div>
-  )
-}
-
-function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
+function Invitation({ envelopeOpen, scrollContainerRef }) {
   const [guestInfo] = useState(() => getGuestStateFromUrl())
   const guestName =
     typeof guestInfo.displayName === "string" && guestInfo.displayName.trim().length > 0
@@ -550,6 +534,8 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
     guestInfo.prefillRsvpName ? "Sin alergías ni observaciones." : "",
   )
   const [rsvpPlusOne, setRsvpPlusOne] = useState(() => guestInfo.plusOne === true)
+  const [rsvpMenu, setRsvpMenu] = useState("carne")
+  const [rsvpPlusOneMenu, setRsvpPlusOneMenu] = useState("carne")
   const [rsvpSubmitting, setRsvpSubmitting] = useState(false)
   const [rsvpFeedback, setRsvpFeedback] = useState(null) // { type: 'ok' | 'err', text: string }
 
@@ -611,7 +597,7 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
     })
   }, [scrollContainerToTop])
 
-  function handleRsvpSubmit(e) {
+  async function handleRsvpSubmit(e) {
     e.preventDefault()
     setRsvpFeedback(null)
 
@@ -622,13 +608,40 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
     }
 
     const comments = rsvpComments.trim()
+    const slug = extractSlugFromLocation()
+    const hasPlusOneGuest = Boolean(guestInfo.plusOne && rsvpPlusOne)
+
+    if (slug) {
+      try {
+        await fetch("/api/rsvp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            name: fullName,
+            plusOne: hasPlusOneGuest,
+            plusOneName: "",
+            menu: rsvpMenu,
+            plusOneMenu: hasPlusOneGuest ? rsvpPlusOneMenu : "",
+            dietary: comments,
+            email: "",
+            phone: "",
+          }),
+        })
+      } catch {
+        /* silencioso: mismo criterio que track */
+      }
+    }
 
     const lines = [
       "Hola, confirmo mi asistencia a la boda de Lis y Juanjo.",
       "",
       `Nombre: ${fullName}`,
-      rsvpPlusOne ? "Con acompañante (+1)." : "Voy solo/a.",
-    ]
+      hasPlusOneGuest ? "Con acompañante (+1)." : "Voy solo/a.",
+      "",
+      `Menú principal: ${menuHumanLabel(rsvpMenu)}`,
+      hasPlusOneGuest ? `Menú acompañante: ${menuHumanLabel(rsvpPlusOneMenu)}` : "",
+    ].filter(Boolean)
     if (comments) lines.push("", "Alergias u observaciones:", comments)
     const text = lines.join("\n")
 
@@ -775,11 +788,11 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
                 type="button"
                 onClick={() => setConocimosLightboxOpen(true)}
                 className="group relative block w-full cursor-zoom-in overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/50 focus-visible:ring-offset-2"
-                aria-label="Ampliar foto de Praga"
+                aria-label="Ampliar foto — nos elegimos"
               >
                 <img
-                  src="/boda/historia-praga.png"
-                  alt="Praga — cómo nos conocimos"
+                  src="/boda/6690c395-e6e4-48b8-8c25-492c9ac597cf.png"
+                  alt="Lis y Juanjo — nos elegimos"
                   loading="lazy"
                   decoding="async"
                   className="w-full h-auto max-h-[min(65svh,480px)] object-cover object-center transition-opacity duration-300 group-hover:opacity-95 sm:max-h-[520px]"
@@ -808,7 +821,7 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
 
             <div className={fotoMarcoInvitacion}>
               <img
-                src="/boda/encuentro.png"
+                src="/boda/5d4c1529-3ed0-4812-a346-799dec95b802.png"
                 alt="Encuentro"
                 loading="lazy"
                 decoding="async"
@@ -834,7 +847,7 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
 
             <div className={fotoMarcoInvitacion}>
               <img
-                src="/boda/distancia.png"
+                src="/boda/01cce7b4-4112-4927-abc9-1b3a3bb9bfb1.png"
                 alt="Distancia"
                 loading="lazy"
                 decoding="async"
@@ -857,7 +870,7 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
 
             <div className={fotoMarcoInvitacion}>
               <img
-                src="/boda/historia-hogar.png"
+                src="/boda/929a4c1a-a108-409f-bfcb-85f70664deac.png"
                 alt="Nuestro hogar"
                 loading="lazy"
                 decoding="async"
@@ -930,7 +943,11 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
               />
             </div>
 
-            <div className="mt-6 flex w-full flex-col items-center">
+            <p className="mx-auto mb-8 max-w-md px-4 text-center font-serif text-base italic leading-relaxed tracking-wide text-wine-dark/70 sm:text-[1.05rem]">
+              Aunque adoramos a los peques, esta celebración será solo para adultos
+            </p>
+
+            <div className="flex w-full flex-col items-center">
               <div className="relative mx-auto w-full max-w-md overflow-hidden rounded-sm border-[0.5px] border-[#e5d5c5]/80 bg-[#faf8f5] py-9 shadow-[0_4px_15px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.03)] px-6 sm:py-12 sm:px-10 flex flex-col items-center">
                 {/* Textura de papel para el cuadro */}
                 <div className="absolute inset-0 opacity-40 pointer-events-none mix-blend-multiply" style={{ backgroundImage: 'url("/boda/cream-paper.png")' }}></div>
@@ -1260,6 +1277,34 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
                 />
               </div>
 
+              <div className="flex flex-col gap-3 text-left" role="group" aria-label="Selección de menú">
+                <span className="text-xs uppercase tracking-[0.2em] text-wine-dark font-medium">
+                  Menú principal (adultos)
+                </span>
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+                  {MENU_OPTIONS.map(([value, label]) => (
+                    <label
+                      key={value}
+                      className={`cursor-pointer rounded-sm border bg-transparent px-2.5 py-2 text-center text-sm font-serif italic transition-colors focus-within:ring-2 focus-within:ring-wine/40 ${
+                        rsvpMenu === value
+                          ? "border-wine text-wine-dark shadow-[inset_0_0_0_1px_rgba(71,20,33,0.35)]"
+                          : "border-wine/30 text-wine-dark/85 hover:border-wine/55"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="rsvp-menu"
+                        value={value}
+                        checked={rsvpMenu === value}
+                        onChange={() => setRsvpMenu(value)}
+                        className="sr-only"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               {guestInfo.plusOne && (
                 <label className="flex items-center gap-3 text-left mt-2 cursor-pointer group">
                   <div className="relative flex items-center justify-center w-5 h-5">
@@ -1279,6 +1324,36 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
                 </label>
               )}
 
+              {guestInfo.plusOne && rsvpPlusOne ? (
+                <div className="flex flex-col gap-3 text-left" role="group" aria-label="Menú del acompañante">
+                  <span className="text-xs uppercase tracking-[0.2em] text-wine-dark font-medium">
+                    Menú del acompañante
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+                    {MENU_OPTIONS.map(([value, label]) => (
+                      <label
+                        key={`p1-${value}`}
+                        className={`cursor-pointer rounded-sm border bg-transparent px-2.5 py-2 text-center text-sm font-serif italic transition-colors focus-within:ring-2 focus-within:ring-wine/40 ${
+                          rsvpPlusOneMenu === value
+                            ? "border-wine text-wine-dark shadow-[inset_0_0_0_1px_rgba(71,20,33,0.35)]"
+                            : "border-wine/30 text-wine-dark/85 hover:border-wine/55"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="rsvp-menu-plus-one"
+                          value={value}
+                          checked={rsvpPlusOneMenu === value}
+                          onChange={() => setRsvpPlusOneMenu(value)}
+                          className="sr-only"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               {rsvpFeedback && (
                 <p
                   className={`text-sm font-serif italic text-center ${
@@ -1297,7 +1372,6 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
               <button
                 type="submit"
                 disabled={rsvpSubmitting}
-                onClick={() => onTrackConfirm?.()}
                 className="mt-2 w-full bg-wine text-cream px-10 py-3.5 rounded-sm text-sm uppercase tracking-widest shadow-md hover:bg-wine-dark hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-wine/50 focus-visible:ring-offset-2"
               >
                 {rsvpSubmitting ? "Abriendo…" : "Confirmar asistencia"}
@@ -1323,8 +1397,8 @@ function Invitation({ envelopeOpen, scrollContainerRef, onTrackConfirm }) {
       <ImageLightbox
         isOpen={conocimosLightboxOpen}
         onClose={() => setConocimosLightboxOpen(false)}
-        src="/boda/historia-praga.png"
-        alt="Praga — cómo nos conocimos Lis y Juanjo"
+        src="/boda/6690c395-e6e4-48b8-8c25-492c9ac597cf.png"
+        alt="Lis y Juanjo — nos elegimos"
       />
     </div>
   )

@@ -4,6 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Parpadeo en plano de mesas (lista «Con mesa» → localizar asiento). */
+@keyframes seat-map-blink-opacity-kf {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.26;
+  }
+}
+
+.seat-map-blink-ring {
+  animation: seat-map-blink-opacity-kf 0.95s ease-in-out infinite;
+}
+
 html {
   height: 100%;
   margin: 0;
@@ -229,4 +246,24 @@ h6 {
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* Panel /dashboard: imprimir lista de mesas u otras vistas sin barras sticky */
+@media print {
+  html,
+  body,
+  #root {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .dashboard-print-root {
+    background: #fff !important;
+    color: #1a070d !important;
+  }
 }

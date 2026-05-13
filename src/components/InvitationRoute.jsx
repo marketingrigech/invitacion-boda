@@ -2,25 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import Invitation from "./Invitation"
 import Envelope from "./Envelope"
 import { trackEvent } from "../utils/track"
+import { extractSlugFromLocation } from "../utils/slugFromPath"
 
 const BG_IMAGE = "/boda/fondo-pagina.webp"
-
-/** Igual criterio que Invitation: solo pathname con segmento tipo invitado. */
-function extractSlugFromLocation() {
-  if (typeof window === "undefined") return null
-  try {
-    const rawPath = decodeURIComponent(window.location.pathname)
-    let segment = rawPath.replace(/^\//, "").split("/")[0] ?? ""
-    if (!segment) return null
-    if (segment.endsWith("+1")) segment = segment.slice(0, -2)
-    segment = segment.trim()
-    if (!segment.includes("-")) return null
-    if (!/^[A-Za-z0-9_-]+$/.test(segment)) return null
-    return segment
-  } catch {
-    return null
-  }
-}
 
 /** Evita doble envío en React StrictMode (doble mount en desarrollo). */
 function trackOncePerSession(storageKey, slug, event) {
@@ -105,11 +89,6 @@ export default function InvitationRoute() {
     setEnvelopeOpen(true)
   }
 
-  const handleTrackConfirm = () => {
-    const slug = slugRef.current ?? extractSlugFromLocation()
-    if (slug) trackEvent(slug, "confirm")
-  }
-
   return (
     <div
       ref={sceneRef}
@@ -131,7 +110,7 @@ export default function InvitationRoute() {
       )}
 
       <div className="relative z-20">
-        <Invitation envelopeOpen={envelopeOpen} scrollContainerRef={sceneRef} onTrackConfirm={handleTrackConfirm} />
+        <Invitation envelopeOpen={envelopeOpen} scrollContainerRef={sceneRef} />
       </div>
     </div>
   )

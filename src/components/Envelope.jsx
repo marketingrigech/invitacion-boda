@@ -396,6 +396,7 @@ export default function Envelope({ onOpen, onReveal, onComplete }) {
                         className="w-32 md:w-40 h-auto select-none transition-transform duration-300"
                         style={{ filter: 'drop-shadow(0px 10px 15px rgba(0,0,0,0.35))' }}
                         draggable={false}
+                        fetchPriority="high"
                     />
                 </div>
 

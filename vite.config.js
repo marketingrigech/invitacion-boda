@@ -1,13 +1,40 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { viteDevApiFallback } from './vite-dev-api-fallback.js'
 
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    // Evita líos en Windows / PowerShell con argumentos sueltos; localhost fiable
-    host: true,
-    port: 5173,
-    strictPort: false,
-    open: true,
-  },
+/**
+ * Las rutas `/api/*` en Vercel son serverless. Con solo Vite:
+ * - Si defines `VITE_API_PROXY` o `API_PROXY` (`.env.local`), se proxea a ese host (p. ej. tu despliegue).
+ * - Si no hay proxy en desarrollo, el plugin `vite-dev-api-fallback` sirve un CRM mínimo y lo guarda en `.vite-dev-api.json`.
+ */
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const apiProxy =
+    (env.VITE_API_PROXY ?? env.API_PROXY ?? '').trim() || ''
+  /** En dev sin proxy, CRM en memoria + disco (no interfiere si hay proxy). */
+  const plugins =
+    mode === 'development' && !apiProxy
+      ? [viteDevApiFallback(), react()]
+      : [react()]
+
+  return {
+    plugins,
+    server: {
+      host: true,
+      port: 5173,
+      strictPort: false,
+      open: true,
+      ...(apiProxy
+        ? {
+            proxy: {
+              '/api': {
+                target: apiProxy,
+                changeOrigin: true,
+                secure: true,
+              },
+            },
+          }
+        : {}),
+    },
+  }
 })
