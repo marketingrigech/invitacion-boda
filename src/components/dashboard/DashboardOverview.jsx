@@ -55,7 +55,8 @@ export default function DashboardOverview() {
   }
 
   const vioSinConfirmar = invitations.filter((g) => {
-    if (g.status === "confirmed" || g.status === "declined") return false
+    if (g.status === "confirmed" || g.status === "declined" || g.status === "preconfirmed")
+      return false
     const kv = analytics[g.slug]
     const views = kv ? Number(kv.views) || 0 : 0
     return views > 0
@@ -69,6 +70,12 @@ export default function DashboardOverview() {
       label: "Enviados",
       count: stats.enviados,
       p: pct(t, stats.enviados),
+    },
+    {
+      key: "preconfirmed",
+      label: "Pre-confirmación",
+      count: stats.preconfirmed ?? 0,
+      p: pct(t, stats.preconfirmed ?? 0),
     },
     {
       key: "confirmados",
@@ -92,8 +99,8 @@ export default function DashboardOverview() {
         </div>
       ) : null}
 
-      {/* Estado invitaciones — 5 tarjetas */}
-      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      {/* Estado invitaciones — 6 tarjetas */}
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <FadeInSection className={cardBase} delay="0ms">
           <p className={labelSm}>Total</p>
           <p className={`${nStat} mt-1.5 text-wine-dark`}>{stats.total}</p>
@@ -113,7 +120,12 @@ export default function DashboardOverview() {
         </FadeInSection>
         <FadeInSection className={cardBase} delay="80ms">
           <p className={labelSm}>Enviado</p>
-          <p className={`${nStat} mt-1.5 text-teal-700`}>{stats.sent}</p>
+          <p className={`${nStat} mt-1.5 text-violet-800`}>{stats.sent}</p>
+        </FadeInSection>
+        <FadeInSection className={cardBase} delay="100ms">
+          <p className={labelSm}>Pre-confirmación</p>
+          <p className={`${nStat} mt-1.5 text-sky-900`}>{stats.preconfirmed ?? 0}</p>
+          <p className="mt-1.5 text-[10px] leading-snug text-wine/65">Invitado envió RSVP; pendiente de los novios.</p>
         </FadeInSection>
         <FadeInSection className={cardBase} delay="120ms">
           <p className={labelSm}>Confirmados</p>
@@ -155,7 +167,7 @@ export default function DashboardOverview() {
         <p className="mb-4 text-center text-xs font-bold uppercase tracking-wide text-wine-dark md:text-sm">
           Embudo (cada barra = % sobre invitaciones creadas)
         </p>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
           {funnelSteps.map((step) => (
             <div key={step.key} className="flex flex-col items-center">
               <div className="flex h-44 w-full max-w-[108px] items-end justify-center rounded-xl bg-neutral-100 ring-1 ring-wine/10 sm:h-52 sm:max-w-[120px]">

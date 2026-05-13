@@ -16,13 +16,16 @@ function mLabel(menu) {
   return LABEL[/** @type {keyof typeof LABEL} */ (menu)] ?? menu ?? "Sin especificar"
 }
 
-/** Mesa asignada en el plano según titular o +1. */
+/** Mesa en catering: titular solo si tiene plaza en el plano; +1 según su mesa explícita o la del titular si comparten. */
 function tableIdForParty(g, /** @type {"titular" | "plusOne"} */ party) {
   if (party === "titular") {
     const t = g.tableId
-    return t && t !== "" ? t : null
+    if (!t || t === "") return null
+    if (typeof g.seatIndex !== "number") return null
+    return t
   }
   if (!g.plusOne) return null
+  if (typeof g.plusOneSeatIndex !== "number") return null
   const t =
     g.plusOneTableId != null && g.plusOneTableId !== "" ? g.plusOneTableId : g.tableId
   return t && t !== "" ? t : null

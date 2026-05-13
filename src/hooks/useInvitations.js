@@ -3,7 +3,7 @@ import { buildSlug } from "../utils/slugify"
 
 const STORAGE_KEY = "wedding_invitations"
 
-const STATUSES = /** @type {const} */ (["pending", "sent", "confirmed", "declined"])
+const STATUSES = /** @type {const} */ (["pending", "sent", "preconfirmed", "confirmed", "declined"])
 
 const MENU_VALUES = /** @type {const} */ ([
   "",
@@ -68,7 +68,13 @@ function normalizeOneRow(rowRaw) {
   const legacyLinkSent = Boolean(row.linkSent)
 
   if (!STATUSES.includes(/** @type {InviteStatus} */ (status))) {
-    if (status !== "pending" && status !== "confirmed" && status !== "declined") {
+    if (
+      status !== "pending" &&
+      status !== "sent" &&
+      status !== "preconfirmed" &&
+      status !== "confirmed" &&
+      status !== "declined"
+    ) {
       status = "pending"
     }
   }
@@ -206,9 +212,10 @@ function computeStats(list) {
   const confirmedList = list.filter((i) => i.status === "confirmed")
   const pending = list.filter((i) => i.status === "pending").length
   const sent = list.filter((i) => i.status === "sent").length
+  const preconfirmed = list.filter((i) => i.status === "preconfirmed").length
   const declined = list.filter((i) => i.status === "declined").length
   const enviados = list.filter((i) =>
-    ["sent", "confirmed", "declined"].includes(i.status),
+    ["sent", "preconfirmed", "confirmed", "declined"].includes(i.status),
   ).length
   const totalAttendees =
     confirmedList.length +
@@ -217,6 +224,7 @@ function computeStats(list) {
   return {
     total,
     confirmed: confirmedList.length,
+    preconfirmed,
     pending,
     sent,
     declined,
@@ -468,6 +476,7 @@ export function useInvitations() {
     const order = /** @type {InviteStatus[]} */ ([
       "pending",
       "sent",
+      "preconfirmed",
       "confirmed",
       "declined",
     ])

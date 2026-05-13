@@ -14,10 +14,10 @@ function plusOneEffectiveTable(r) {
   return r.tableId
 }
 
-/** Confirmado o invitación aún sin RSVP: puede usar asiento en el plano. */
+/** Confirmado, pre-confirmación o invitación aún sin RSVP: puede usar asiento en el plano. */
 function invitationCanOccupySeatInMap(r) {
   const s = r.status
-  return s === "confirmed" || s === "pending" || s === "sent"
+  return s === "confirmed" || s === "preconfirmed" || s === "pending" || s === "sent"
 }
 
 function newSeedId(prefix) {
@@ -199,20 +199,9 @@ export default function DashboardProvider({ children }) {
             }
           if (part === "titular") {
             const n = { ...r, seatIndex: null }
-            const plusOnSameTable =
-              n.plusOne &&
-              typeof n.plusOneSeatIndex === "number" &&
-              (n.plusOneTableId == null ||
-                n.plusOneTableId === "" ||
-                n.plusOneTableId === r.tableId)
-            if (plusOnSameTable) {
-              n.plusOneSeatIndex = null
-              n.plusOneTableId = null
-            }
-            const titPlaced = typeof n.seatIndex === "number"
             const plusPlaced =
               n.plusOne && typeof n.plusOneSeatIndex === "number"
-            if (!titPlaced && !plusPlaced) n.tableId = null
+            if (!plusPlaced) n.tableId = null
             return n
           }
           if (part === "plusOne") {
@@ -346,14 +335,20 @@ export default function DashboardProvider({ children }) {
         }
 
         return prev.map((r) => {
-          if (displaced && r.id === displaced.id) {
+          if (displaced && r.id === displaced.id && r.id !== guestId) {
             if (displaced.party === "titular")
               return { ...r, seatIndex: displaced.seatIndex }
             return { ...r, plusOneSeatIndex: displaced.seatIndex }
           }
           if (r.id === guestId) {
+            let row = { ...r }
+            if (displaced && displaced.id === guestId) {
+              if (displaced.party === "titular")
+                row = { ...row, seatIndex: displaced.seatIndex }
+              else row = { ...row, plusOneSeatIndex: displaced.seatIndex }
+            }
             if (seatRole === "titular") {
-              const base = { ...r, tableId: tableIdOrNonNull }
+              const base = { ...row, tableId: tableIdOrNonNull }
               if (titularChangingTable) {
                 const plusSharesTitularTable =
                   !mine.plusOne ||
@@ -385,15 +380,15 @@ export default function DashboardProvider({ children }) {
               return { ...base, seatIndex: /** @type {number} */ (S) }
             }
             let /** @type {string | null} */ nextPlusOneTableId
-            if (r.tableId == null || r.tableId === "") {
+            if (row.tableId == null || row.tableId === "") {
               nextPlusOneTableId = tableIdOrNonNull
-            } else if (r.tableId === tableIdOrNonNull) {
+            } else if (row.tableId === tableIdOrNonNull) {
               nextPlusOneTableId = null
             } else {
               nextPlusOneTableId = tableIdOrNonNull
             }
             return {
-              ...r,
+              ...row,
               plusOneSeatIndex: /** @type {number} */ (S),
               plusOneTableId: nextPlusOneTableId,
             }

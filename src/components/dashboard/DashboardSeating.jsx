@@ -41,10 +41,10 @@ function isAwaitingInviteRsvp(inv) {
   return inv.status === "pending" || inv.status === "sent"
 }
 
-/** Puede colocarse en el plano (confirmado o aún sin RSVP definitivo). */
+/** Puede colocarse en el plano (confirmado, pre-confirmación o aún sin RSVP definitivo). */
 function invitationCanOccupySeat(inv) {
   const s = inv.status
-  return s === "confirmed" || s === "pending" || s === "sent"
+  return s === "confirmed" || s === "preconfirmed" || s === "pending" || s === "sent"
 }
 
 /** Etiqueta breve del estado de invitación (pestaña «Sin confirmar»). */
@@ -52,6 +52,7 @@ function inviteStatusLabel(inv) {
   const s = inv.status
   if (s === "pending") return "Pendiente"
   if (s === "sent") return "Enviada"
+  if (s === "preconfirmed") return "Pre-confirmación"
   if (s === "declined") return "No asiste"
   return String(s)
 }
@@ -62,8 +63,10 @@ function unconfirmedChipWrapClass(inv, role) {
     return "border-wine/15 bg-cream/70 text-wine-dark"
   if (inv.status === "declined")
     return "border-rose-200 bg-rose-50/70 text-rose-950"
+  if (inv.status === "preconfirmed")
+    return "border-sky-300/90 bg-sky-100/70 text-sky-950"
   if (inv.status === "sent")
-    return "border-sky-200/90 bg-sky-50/55 text-wine-dark"
+    return "border-violet-300/90 bg-violet-100/70 text-violet-950"
   return "border-amber-200/90 bg-amber-50/50 text-wine-dark"
 }
 
@@ -126,7 +129,9 @@ function isInfantilSeat(inv, role) {
  * @param {'titular' | 'plusOne'} role
  */
 function seatBlobFill(inv, role) {
-  if (inv.status === "pending" || inv.status === "sent") return "#f59e0b"
+  if (inv.status === "pending") return "#f59e0b"
+  if (inv.status === "sent") return "#7c3aed"
+  if (inv.status === "preconfirmed") return "#38bdf8"
   if (isInfantilSeat(inv, role)) return "#16a34a"
   if (role === "plusOne") return "#7c3aed"
   return "#0369a1"

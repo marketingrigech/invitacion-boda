@@ -4,7 +4,7 @@ const KEY = "crm:wedding_invitations"
 const MAX_GUESTS = 400
 
 const MENU_VALUES = new Set(["", "carne", "pescado", "vegetariano", "infantil"])
-const INVITE_STATUSES = new Set(["pending", "sent", "confirmed", "declined"])
+const INVITE_STATUSES = new Set(["pending", "sent", "preconfirmed", "confirmed", "declined"])
 
 function parseBody(req) {
   const raw = req.body

@@ -630,7 +630,7 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
 
     setRsvpFeedback({
       type: "ok",
-      text: "Se ha abierto el mensaje preparado; solo tienes que pulsar Enviar.",
+      text: "Se ha abierto el mensaje preparado; solo tienes que pulsar Enviar. Quedarás en pre-confirmación hasta que Lis y Juanjo validen tu asistencia.",
     })
   }
 
@@ -920,9 +920,17 @@ function Invitation({ envelopeOpen, scrollContainerRef }) {
               />
             </div>
 
-            <p className="mx-auto mb-8 max-w-md px-4 text-center font-serif text-base italic leading-relaxed tracking-wide text-wine-dark/70 sm:text-[1.05rem]">
-              Aunque adoramos a los peques, esta celebración será solo para adultos
-            </p>
+            <div
+              className="mx-auto mb-8 max-w-md rounded-sm bg-black px-4 py-5 text-center shadow-md sm:px-6"
+              role="note"
+            >
+              <span className="block font-serif text-base italic leading-relaxed tracking-wide text-white/95 sm:text-[1.05rem]">
+                Aunque adoramos a los peques, esta celebración será solo para adultos
+              </span>
+              <span className="mt-3 block font-sans text-sm font-bold uppercase tracking-[0.18em] text-white">
+                SOLO ADULTOS
+              </span>
+            </div>
 
             <div className="flex w-full flex-col items-center">
               <div className="relative mx-auto w-full max-w-md overflow-hidden rounded-sm border-[0.5px] border-[#e5d5c5]/80 bg-[#faf8f5] py-9 shadow-[0_4px_15px_rgba(0,0,0,0.05),_0_1px_3px_rgba(0,0,0,0.03)] px-6 sm:py-12 sm:px-10 flex flex-col items-center">

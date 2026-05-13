@@ -10,6 +10,8 @@ function statusLabel(status) {
   switch (status) {
     case "sent":
       return "Enviado"
+    case "preconfirmed":
+      return "Pre-confirmación"
     case "confirmed":
       return "Confirmado"
     case "declined":
@@ -22,7 +24,9 @@ function statusLabel(status) {
 function statusPillClass(status) {
   switch (status) {
     case "sent":
-      return "bg-sky-100 text-sky-900 border-sky-700/40"
+      return "bg-violet-100 text-violet-900 border-violet-700/40"
+    case "preconfirmed":
+      return "bg-sky-200 text-sky-950 border-sky-700/50"
     case "confirmed":
       return "bg-emerald-100 text-emerald-900 border-emerald-700/40"
     case "declined":
@@ -106,7 +110,10 @@ function Activity({ row, kv }) {
   const clicks = Number(kv?.clicks) || 0
   const confirms = Number(kv?.confirms) || 0
   const sawNoConfirm =
-    views > 0 && row.status !== "confirmed" && row.status !== "declined"
+    views > 0 &&
+    row.status !== "confirmed" &&
+    row.status !== "declined" &&
+    row.status !== "preconfirmed"
   const last = kv?.last_view ? formatTimeAgo(kv.last_view) : null
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0 text-[11px] tabular-nums leading-tight text-wine-dark">
@@ -274,6 +281,7 @@ export default function DashboardGuests() {
               <option value="all">Todos</option>
               <option value="pending">Pendiente</option>
               <option value="sent">Enviado</option>
+              <option value="preconfirmed">Pre-confirmación</option>
               <option value="confirmed">Confirmados</option>
               <option value="declined">No asisten</option>
             </select>

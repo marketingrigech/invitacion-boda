@@ -216,7 +216,8 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
   const funnelSteps = [
     { label: "Creados", count: stats.total, hint: "100% base" },
     { label: "Enviados", count: stats.enviados, hint: "Enlace enviado (CRM)" },
-    { label: "Confirmados", count: stats.confirmed, hint: "RSVP sí" },
+    { label: "Pre-conf.", count: stats.preconfirmed ?? 0, hint: "Invitado envió RSVP" },
+    { label: "Confirmados", count: stats.confirmed, hint: "Novios validaron" },
     { label: "No asisten", count: stats.declined, hint: "Declinado" },
   ]
 
@@ -227,7 +228,7 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
           <p className={`${nLg} text-wine-dark`}>{stats.total}</p>
           <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
@@ -241,9 +242,15 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
           </p>
         </div>
         <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
-          <p className={`${nLg} text-sky-900`}>{stats.sent}</p>
+          <p className={`${nLg} text-violet-900`}>{stats.sent}</p>
           <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
             Enviado
+          </p>
+        </div>
+        <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
+          <p className={`${nLg} text-sky-800`}>{stats.preconfirmed ?? 0}</p>
+          <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
+            Pre-confirmación
           </p>
         </div>
         <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm">
@@ -252,7 +259,7 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
             Confirmados
           </p>
         </div>
-        <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm lg:col-span-1 col-span-2 lg:col-auto">
+        <div className="rounded-lg border border-wine bg-cream px-3 py-3 shadow-sm col-span-2 sm:col-span-1 lg:col-span-1">
           <p className={`${nLg} text-red-800`}>{stats.declined}</p>
           <p className="mt-1 text-xs font-sans uppercase tracking-wide text-wine/80">
             No asisten
@@ -294,7 +301,7 @@ function DashboardStats({ stats, kvTotals = { totalViews: 0, totalOpens: 0, tota
         <p className="mb-2 text-[10px] font-sans font-semibold uppercase leading-snug tracking-wide text-wine-dark sm:text-xs">
           Embudo (cada barra = % sobre invitaciones creadas)
         </p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {funnelSteps.map((s) => (
             <div key={s.label} className="rounded-lg border border-wine/25 bg-white/70 px-2 py-2">
               <div className="flex h-24 items-end justify-center gap-1 rounded-md bg-cream/80 px-1 pt-1">
@@ -479,6 +486,8 @@ function statusLabel(status) {
   switch (status) {
     case "sent":
       return "Enviado"
+    case "preconfirmed":
+      return "Pre-confirmación"
     case "confirmed":
       return "Confirmado"
     case "declined":
@@ -491,7 +500,9 @@ function statusLabel(status) {
 function statusPillClass(status) {
   switch (status) {
     case "sent":
-      return "bg-sky-100 text-sky-900 border-sky-700/40"
+      return "bg-violet-100 text-violet-900 border-violet-700/40"
+    case "preconfirmed":
+      return "bg-sky-200 text-sky-950 border-sky-700/50"
     case "confirmed":
       return "bg-emerald-100 text-emerald-900 border-emerald-700/40"
     case "declined":
@@ -531,7 +542,7 @@ function InviteRow({
 
   const pipelineBtn =
     "inline-flex h-9 w-9 items-center justify-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-wine/40"
-  const linkSentActive = ["sent", "confirmed", "declined"].includes(row.status)
+  const linkSentActive = ["sent", "preconfirmed", "confirmed", "declined"].includes(row.status)
 
   return (
     <tr className="border-b border-sand/60 hover:bg-cream/50">
@@ -563,7 +574,7 @@ function InviteRow({
           type="button"
           onClick={() => onCycleStatus(row.id)}
           className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusPillClass(row.status)}`}
-          title="Clic para avanzar: pendiente → enviado → confirmado → no asiste"
+          title="Clic para avanzar: pendiente → enviado → pre-confirmación → confirmado → no asiste"
         >
           {statusLabel(row.status)}
         </button>
@@ -695,7 +706,7 @@ function InviteMobileCard({
 
   const pipelineBtn =
     "inline-flex h-10 w-10 items-center justify-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-wine/40 active:scale-[0.98]"
-  const linkSentActive = ["sent", "confirmed", "declined"].includes(row.status)
+  const linkSentActive = ["sent", "preconfirmed", "confirmed", "declined"].includes(row.status)
 
   return (
     <article className="border-b border-sand/60 px-3 py-4 last:border-b-0 sm:px-4">
@@ -734,7 +745,7 @@ function InviteMobileCard({
           type="button"
           onClick={() => onCycleStatus(row.id)}
           className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${statusPillClass(row.status)}`}
-          title="Clic para avanzar: pendiente → enviado → confirmado → no asiste"
+          title="Clic para avanzar: pendiente → enviado → pre-confirmación → confirmado → no asiste"
         >
           {statusLabel(row.status)}
         </button>
@@ -864,6 +875,7 @@ function InviteList({
             <option value="all">Todos</option>
             <option value="pending">Pendiente</option>
             <option value="sent">Enviado</option>
+            <option value="preconfirmed">Pre-confirmación</option>
             <option value="confirmed">Confirmados</option>
             <option value="declined">No asisten</option>
           </select>

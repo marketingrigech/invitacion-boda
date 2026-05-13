@@ -95,11 +95,13 @@ export default async function handler(req, res) {
     if (idx >= 0) {
       const prev = /** @type {Record<string, unknown>} */ (list[idx])
       const plusOneStored = Boolean(prev.plusOne)
+      const prevStatus = typeof prev.status === "string" ? prev.status : "pending"
+      const nextStatus = prevStatus === "confirmed" ? "confirmed" : "preconfirmed"
       list[idx] = {
         ...prev,
         name,
         plusOne: plusOneStored ? plusOneStored : Boolean(plusOne),
-        status: "confirmed",
+        status: nextStatus,
         rsvpReceived: true,
         rsvpAt: now,
         menu,
@@ -116,7 +118,7 @@ export default async function handler(req, res) {
         name,
         plusOne,
         plusOneName: plusOne ? plusOneName : "",
-        status: "confirmed",
+        status: "preconfirmed",
         createdAt: now,
         menu,
         plusOneMenu,
