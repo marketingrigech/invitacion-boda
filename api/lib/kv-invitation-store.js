@@ -3,6 +3,22 @@ import { kv } from "@vercel/kv"
 /** Misma constante que en guests.js / rsvp.js */
 export const WEDDING_INVITATIONS_KV_KEY = "crm:wedding_invitations"
 
+/**
+ * Upstash aplica JSON.parse sobre el resultado de EVAL cuando es un blob JSON válido.
+ * Debemos reconstruir un string estable para CAS o la comparación con Redis nunca coincide.
+ * @param {unknown} val
+ */
+function invitationBlobEvalToComparableRaw(val) {
+  if (val == null) return ""
+  if (typeof val === "string") return val
+  if (typeof val === "number" || typeof val === "boolean") return String(val)
+  try {
+    return JSON.stringify(val)
+  } catch {
+    return ""
+  }
+}
+
 const READ_INVITATIONS_RAW = `
 local v = redis.call('GET', KEYS[1])
 if v == false then return '' end
@@ -32,9 +48,7 @@ return 1`
 export async function kvGetInvitationBlobRaw(store, key = WEDDING_INVITATIONS_KV_KEY) {
   /** @type {unknown} */
   const r = await store.eval(READ_INVITATIONS_RAW, [key], [])
-  if (typeof r === "string") return r
-  if (r == null) return ""
-  return String(r)
+  return invitationBlobEvalToComparableRaw(r)
 }
 
 /**
@@ -44,7 +58,7 @@ export async function kvGetInvitationBlobRaw(store, key = WEDDING_INVITATIONS_KV
 export async function kvCasSetInvitationBlob(store, key, expectedRaw, nextRaw) {
   /** @type {unknown} */
   const v = await store.eval(CAS_SET_INVITATIONS, [key], [expectedRaw, nextRaw])
-  return v === 1 || v === "1"
+  return v === 1 || v === "1" || Number(v) === 1
 }
 
 /**
@@ -65,7 +79,7 @@ export async function kvCasApplyRsvpWithAnalytics(
     slugSlug,
     confirmIso,
   ])
-  return v === 1 || v === "1"
+  return v === 1 || v === "1" || Number(v) === 1
 }
 
 function sleep(ms) {

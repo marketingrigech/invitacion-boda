@@ -168,12 +168,37 @@ function saveToStorage(list) {
   }
 }
 
-function pushGuestsToServer(list) {
-  fetch("/api/guests", {
+async function fetchPostGuests(invitationsPayload) {
+  return fetch("/api/guests", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ invitations: list }),
-  }).catch(() => {})
+    body: JSON.stringify({ invitations: invitationsPayload }),
+  })
+}
+
+/** Reintentos suaves ante 503/5xx tras concurrencia o carga KV. */
+async function pushGuestsToServerAwait(list, attempt = 0) {
+  const maxAttempts = 8
+  const delayMs = () => 100 + attempt * 80 + Math.floor(Math.random() * 120)
+  try {
+    const r = await fetchPostGuests(list)
+    if (r.ok) return true
+    if (attempt + 1 < maxAttempts && (r.status >= 500 || r.status === 408)) {
+      await new Promise((res) => setTimeout(res, delayMs()))
+      return pushGuestsToServerAwait(list, attempt + 1)
+    }
+  } catch {
+    if (attempt + 1 < maxAttempts) {
+      await new Promise((res) => setTimeout(res, delayMs()))
+      return pushGuestsToServerAwait(list, attempt + 1)
+    }
+  }
+  return false
+}
+
+/** @param {Invitation[]} list */
+function pushGuestsToServer(list) {
+  void pushGuestsToServerAwait(list.slice())
 }
 
 /** @typedef {{ carne:number, pescado:number, vegetariano:number, infantil:number, empty:number }} MenuAgg */
@@ -260,11 +285,7 @@ export function useInvitations() {
             saveToStorage(remote)
           }
         } else if (local.length > 0) {
-          await fetch("/api/guests", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ invitations: local }),
-          }).catch(() => {})
+          await pushGuestsToServerAwait(local.slice())
           if (!cancelled) setInvitations(local)
         }
       } catch {
