@@ -1,0 +1,9 @@
+{
+  "remote.autoForwardPorts": true,
+  "remote.portsAttributes": {
+    "5173": {
+      "label": "Vite · invitacion-boda",
+      "onAutoForward": "notify"
+    }
+  }
+}

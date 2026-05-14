@@ -20,10 +20,12 @@ export default defineConfig(({ mode }) => {
   return {
     plugins,
     server: {
+      /** 0.0.0.0: accesible vía reenvío de puertos (Cursor / VS Code Remote) y LAN. */
       host: true,
       port: 5173,
       strictPort: false,
-      open: true,
+      /** En remoto `open` intenta abrir el navegador en el servidor, no en tu PC. */
+      open: false,
       ...(apiProxy
         ? {
             proxy: {
