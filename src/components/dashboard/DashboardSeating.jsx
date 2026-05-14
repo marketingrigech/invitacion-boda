@@ -163,6 +163,12 @@ function tableGeom(t, shapeRaw) {
     const ry = base * 0.9
     return { rx, ry, orbitX: rx + 52, orbitY: ry + 52 }
   }
+  if (shapeRaw === "honor") {
+    /** Mesa de honor: más ancha que la rectangular, protagonista en el plano. */
+    const rx = base * 1.48
+    const ry = base * 0.98
+    return { rx, ry, orbitX: rx + 58, orbitY: ry + 54 }
+  }
   return { rx: base, ry: base, orbitX: base + 56, orbitY: base + 56 }
 }
 
@@ -178,6 +184,9 @@ function tableLabelBox(shapeRaw, rx, ry) {
   }
   if (shapeRaw === "square") {
     return { w: 2 * rx * 0.82, h: 2 * ry * 0.8 }
+  }
+  if (shapeRaw === "honor") {
+    return { w: 2 * rx * 0.82, h: 2 * ry * 0.7 }
   }
   return { w: 2 * rx * 0.82, h: 2 * ry * 0.72 }
 }
@@ -299,7 +308,7 @@ export default function DashboardSeating() {
   const [editTableName, setEditTableName] = useState("")
   const [editTableCap, setEditTableCap] = useState("10")
   const [editTableShape, setEditTableShape] = useState(
-    /** @type {'round' | 'square' | 'rectangular'} */ ("round"),
+    /** @type {'round' | 'square' | 'rectangular' | 'honor'} */ ("round"),
   )
   /** Panel derecha: ocupantes ↔ datos mesa */
   const [tablePanelTab, setTablePanelTab] = useState(
@@ -734,7 +743,9 @@ export default function DashboardSeating() {
         ? "square"
         : s === "rectangular"
           ? "rectangular"
-          : "round",
+          : s === "honor"
+            ? "honor"
+            : "round",
     )
   }, [selectedTableId, tables])
 
@@ -759,7 +770,9 @@ export default function DashboardSeating() {
         ? "square"
         : editTableShape === "rectangular"
           ? "rectangular"
-          : "round"
+          : editTableShape === "honor"
+            ? "honor"
+            : "round"
     saveTablesToServer(
       tables.map((tb) =>
         tb.id === selectedTableId
@@ -775,12 +788,17 @@ export default function DashboardSeating() {
     const t = {
       id: newTableId(),
       name:
-        shape === "round"
+        shape === "honor"
+          ? "Mesa de honor"
+          : shape === "round"
           ? "Mesa redonda"
           : shape === "square"
             ? "Mesa cuadrada"
             : "Mesa rectangular",
-      capacity: Math.min(30, Math.max(1, 10)),
+      capacity: Math.min(
+        30,
+        Math.max(1, shape === "honor" ? 12 : 10),
+      ),
       notes: "",
       shape,
       x: spot.x,
@@ -860,6 +878,7 @@ export default function DashboardSeating() {
           pieces.push(`${companionLabel(x)} (+1 #${x.plusOneSeatIndex + 1})`)
       }
       const shape = tbl.shape ?? "round"
+      const formaCsv = shape === "honor" ? "mesa_de_honor" : shape
       const seatedHere = [...guestsAt(tbl.id)].reduce((acc, x) => {
         let k = 0
         if (x.tableId === tbl.id && typeof x.seatIndex === "number") k++
@@ -873,7 +892,7 @@ export default function DashboardSeating() {
       }, 0)
       return [
         tbl.name,
-        shape,
+        formaCsv,
         String(tbl.capacity),
         pieces.join(" | "),
         String(seatedHere),
@@ -1809,6 +1828,27 @@ export default function DashboardSeating() {
                 <circle cx="6.2" cy="16" r="1.2" fill="currentColor" stroke="none" className="text-wine/45" />
               </svg>
             </button>
+            <span
+              className="mx-0.5 h-6 w-px shrink-0 bg-wine/15"
+              aria-hidden
+            />
+            <button
+              type="button"
+              title="Mesa de honor (rectangular amplia · 12 plazas)"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-700/45 bg-amber-50/90 text-amber-900 shadow-sm hover:bg-amber-100"
+              onClick={() => addTable("honor")}
+            >
+              <svg viewBox="0 0 32 32" className="h-6 w-6" fill="none" aria-hidden>
+                <rect x="3" y="11" width="26" height="12" rx="2.5" stroke="#B8860B" strokeWidth="1.35" fill="#FFFBF5" />
+                <path
+                  fill="#B8860B"
+                  d="M10 11V8.2c0-.5.4-.9.9-.9.4 0 .7.2.8.6l.8 2.4.8-2.4c.1-.4.4-.6.8-.6.5 0 .9.4.9.9V11h-4zm6.8 0V7.4c0-.5.4-.9.9-.9.4 0 .7.3.8.6l.6 1.5.6-1.5c.1-.4.4-.6.8-.6.5 0 .9.4.9.9V11h-4zM23 11V8.1c0-.5.4-.9.9-.9s.9.4.9.9V11h-1.8z"
+                />
+                <circle cx="8" cy="21" r="1.15" fill="currentColor" className="text-wine/45" stroke="none" />
+                <circle cx="16" cy="21" r="1.15" fill="currentColor" className="text-wine/45" stroke="none" />
+                <circle cx="24" cy="21" r="1.15" fill="currentColor" className="text-wine/45" stroke="none" />
+              </svg>
+            </button>
           </div>
 
           {mapMovePick && mapMoveBannerLine ? (
@@ -1936,6 +1976,31 @@ export default function DashboardSeating() {
                     strokeWidth={2}
                     onMouseDown={(e) => onTableBackdropDown(e, tbl)}
                   />
+                ) : shape === "honor" ? (
+                  <g>
+                    <rect
+                      x={-rx - 3}
+                      y={-ry - 3}
+                      width={rx * 2 + 6}
+                      height={ry * 2 + 6}
+                      rx={17}
+                      fill="none"
+                      stroke="#B8860B"
+                      strokeWidth={2.5}
+                      className="seat-plan-table-drag cursor-grab"
+                      onMouseDown={(e) => onTableBackdropDown(e, tbl)}
+                    />
+                    <rect
+                      x={-rx}
+                      y={-ry}
+                      width={rx * 2}
+                      height={ry * 2}
+                      rx={14}
+                      className="seat-plan-table-drag cursor-grab fill-[#fff9f2] stroke-wine-dark/60"
+                      strokeWidth={2}
+                      onMouseDown={(e) => onTableBackdropDown(e, tbl)}
+                    />
+                  </g>
                 ) : (
                   <rect
                     x={-rx}
@@ -2744,7 +2809,7 @@ export default function DashboardSeating() {
                           value={editTableShape}
                           onChange={(e) =>
                             setEditTableShape(
-                              /** @type {'round'|'square'|'rectangular'} */ (
+                              /** @type {'round'|'square'|'rectangular'|'honor'} */ (
                                 e.target.value
                               ),
                             )
@@ -2754,6 +2819,7 @@ export default function DashboardSeating() {
                           <option value="round">Redonda</option>
                           <option value="square">Cuadrada</option>
                           <option value="rectangular">Rectangular</option>
+                          <option value="honor">Mesa de honor</option>
                         </select>
                       </label>
                     </div>
@@ -2779,7 +2845,9 @@ export default function DashboardSeating() {
                               ? "square"
                               : s === "rectangular"
                                 ? "rectangular"
-                                : "round",
+                                : s === "honor"
+                                  ? "honor"
+                                  : "round",
                           )
                         }}
                       >
