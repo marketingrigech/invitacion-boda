@@ -17,7 +17,7 @@ function parseBody(req) {
   return {}
 }
 
-const SHAPE_VALUES = new Set(["round", "rectangular", "square"])
+const SHAPE_VALUES = new Set(["round", "rectangular", "square", "honor"])
 const VB_W = 1200
 const VB_H = 800
 
