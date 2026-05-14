@@ -35,6 +35,8 @@ const MENU_VALUES = /** @type {const} */ ([
  * @property {string} email
  * @property {string} phone
  * @property {string} plusOneName
+ * @property {boolean} isCouple Titular integrante de la pareja / anfitriones (nombre libre en el invitado).
+ * @property {boolean} plusOneIsCouple Acompañante también es pareja (dos invitados en una misma invitación).
  */
 
 function newId() {
@@ -140,6 +142,8 @@ function normalizeOneRow(rowRaw) {
       typeof row.plusOneName === "string"
         ? row.plusOneName.slice(0, 200)
         : "",
+    isCouple: Boolean(row.isCouple),
+    plusOneIsCouple: Boolean(row.plusOneIsCouple),
   })
 }
 
@@ -411,12 +415,17 @@ export function useInvitations() {
               merged.plusOneMenu = ""
               merged.plusOneSeatIndex = null
               merged.plusOneTableId = null
+              merged.plusOneIsCouple = false
             }
           }
           if ("name" in patch && patch.name != null)
             merged.name = String(patch.name).slice(0, 499)
           if ("slug" in patch && patch.slug != null)
             merged.slug = String(patch.slug).slice(0, 299)
+          if ("isCouple" in patch && patch.isCouple != null)
+            merged.isCouple = Boolean(patch.isCouple)
+          if ("plusOneIsCouple" in patch && patch.plusOneIsCouple != null)
+            merged.plusOneIsCouple = Boolean(patch.plusOneIsCouple)
           return merged
         }),
       )
@@ -459,6 +468,8 @@ export function useInvitations() {
       email: "",
       phone: "",
       plusOneName: "",
+      isCouple: false,
+      plusOneIsCouple: false,
     })
     const next = [inv, ...prev]
     saveToStorage(next)
@@ -484,6 +495,7 @@ export function useInvitations() {
           plusOneMenu: nextOne ? i.plusOneMenu : "",
           plusOneSeatIndex: nextOne ? i.plusOneSeatIndex : null,
           plusOneTableId: nextOne ? i.plusOneTableId : null,
+          plusOneIsCouple: nextOne ? i.plusOneIsCouple : false,
         }
       }),
     )

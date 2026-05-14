@@ -17,6 +17,7 @@ export default function EditGuestModal({
       aria-modal
     >
       <form
+        key={guest.id}
         className="w-full max-w-md rounded-xl border border-wine/40 bg-cream px-5 py-5 shadow-xl"
         onSubmit={(e) => {
           e.preventDefault()
@@ -28,6 +29,9 @@ export default function EditGuestModal({
             phone: fd.get("phone"),
             tableId: fd.get("tableId") === "" ? null : String(fd.get("tableId")),
             plusOneMenu: fd.get("plusOneMenu"),
+            isCouple: fd.get("isCouple") === "on",
+            plusOneIsCouple:
+              guest.plusOne && fd.get("plusOneIsCouple") === "on",
           })
           onClose()
         }}
@@ -63,6 +67,43 @@ export default function EditGuestModal({
               <option value="vegetariano">Vegetariano</option>
               <option value="infantil">Menú infantil</option>
             </select>
+          </label>
+        ) : null}
+
+        <label className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-lg border border-rose-200/80 bg-rose-50/50 px-3 py-2.5">
+          <input
+            type="checkbox"
+            name="isCouple"
+            defaultChecked={Boolean(guest.isCouple)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-sand text-rose-600 focus:ring-wine"
+          />
+          <span className="text-xs font-medium leading-snug text-wine-dark">
+            <span className="font-semibold text-rose-900">
+              Pareja / anfitriones (persona principal)
+            </span>
+            <span className="mt-0.5 block font-normal text-wine/85">
+              Marcad a quienes sean los novios o anfitriones: el nombre o etiqueta (por ejemplo dos novias, dos novios, etc.)
+              lo ponéis en el invitado en la lista principal; en el plano de mesas veréis un color especial.
+            </span>
+          </span>
+        </label>
+
+        {guest.plusOne ? (
+          <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-lg border border-rose-200/80 bg-rose-50/50 px-3 py-2.5">
+            <input
+              type="checkbox"
+              name="plusOneIsCouple"
+              defaultChecked={Boolean(guest.plusOneIsCouple)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-sand text-rose-600 focus:ring-wine"
+            />
+            <span className="text-xs font-medium leading-snug text-wine-dark">
+              <span className="font-semibold text-rose-900">
+                Pareja / anfitriones (acompañante)
+              </span>
+              <span className="mt-0.5 block font-normal text-wine/85">
+                Activadlo si el +1 también es anfitrión dentro de la misma invitación.
+              </span>
+            </span>
           </label>
         ) : null}
 

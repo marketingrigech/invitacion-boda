@@ -104,15 +104,34 @@ function seatPlusOneDeLine(inv) {
 }
 
 /**
+ * Titular o +1 marcados como pareja / anfitriones (color especial en el plano).
+ * Los nombres o etiquetas son libres en cada invitado.
+ * @param {import("../../hooks/useInvitations.js").Invitation} inv
+ * @param {'titular' | 'plusOne'} role
+ */
+function isParejaSeat(inv, role) {
+  if (role === "titular") return Boolean(inv.isCouple)
+  return Boolean(inv.plusOneIsCouple)
+}
+
+/** Anillo en chips de lista cuando es pareja. */
+function parejaListRingClass(inv, role) {
+  return isParejaSeat(inv, role)
+    ? " ring-2 ring-rose-400/80 ring-offset-1 ring-offset-white/70"
+    : ""
+}
+
+/**
  * Tooltip / título compacto para un asiento ocupado (+1 incluye vínculo con titular).
  */
 function seatHoverFullTitle(inv, role, tableName, seatHuman) {
+  const pfx = isParejaSeat(inv, role) ? " · Pareja / anfitriones" : ""
   if (role === "titular")
-    return `${inv.name?.trim() || "—"} · Mesa «${tableName}» · Asiento ${seatHuman}`
+    return `${inv.name?.trim() || "—"} · Mesa «${tableName}» · Asiento ${seatHuman}${pfx}`
   const named = !!(inv.plusOneName?.trim())
   const main = seatPrimaryLine(inv, role)
   const who = named ? `${main} · ${seatPlusOneDeLine(inv)}` : main
-  return `${who} · Mesa «${tableName}» · Asiento ${seatHuman}`
+  return `${who} · Mesa «${tableName}» · Asiento ${seatHuman}${pfx}`
 }
 
 /**
@@ -130,6 +149,7 @@ function isInfantilSeat(inv, role) {
  * @param {'titular' | 'plusOne'} role
  */
 function seatBlobFill(inv, role) {
+  if (isParejaSeat(inv, role)) return "#db2777"
   if (inv.status === "pending") return "#f59e0b"
   if (inv.status === "sent") return "#7c3aed"
   if (inv.status === "preconfirmed") return "#38bdf8"
@@ -1220,7 +1240,7 @@ export default function DashboardSeating() {
           </div>
           <div
             className="no-print mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] leading-tight text-wine/75"
-            aria-label="Leyenda en el plano: pendiente o enviada, titular, acompañante, menú infantil"
+            aria-label="Leyenda en el plano: pendiente o enviada, titular, acompañante, infantil, pareja"
           >
             <span className="inline-flex items-center gap-1.5">
               <span
@@ -1250,6 +1270,13 @@ export default function DashboardSeating() {
               />
               Infantil
             </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="h-2 w-2 shrink-0 rounded-full bg-pink-600"
+                aria-hidden
+              />
+              Pareja / anfitriones
+            </span>
           </div>
           <input
             type="search"
@@ -1275,7 +1302,7 @@ export default function DashboardSeating() {
                         title={chipTitle}
                         className={`inline-flex max-w-[11.5rem] select-none flex-col gap-0 rounded-md border px-2 py-1 text-[11px] font-semibold leading-tight ${wrap} ${
                           infant ? "ring-1 ring-green-400/55" : ""
-                        }`}
+                        }${parejaListRingClass(g, role)}`}
                       >
                         <span className="inline-flex min-w-0 items-center gap-1">
                           <span className="truncate">{shown}</span>
@@ -1345,7 +1372,7 @@ export default function DashboardSeating() {
                               : infant
                                 ? "border-green-700/45 bg-green-50/90 text-green-950"
                                 : "border-wine/25 bg-cream/80 text-wine-dark"
-                        }`}
+                        }${parejaListRingClass(g, role)}`}
                       >
                         <span className="inline-flex min-w-0 items-center gap-1">
                           <span className="truncate">{shown}</span>
@@ -1416,7 +1443,7 @@ export default function DashboardSeating() {
                               : infant
                                 ? "border-green-700/45 bg-green-50/90 text-green-950"
                                 : "border-wine/25 bg-cream/80 text-wine-dark"
-                        }`}
+                        }${parejaListRingClass(g, role)}`}
                       >
                         <span className="min-w-0 truncate">{chipShown}</span>
                         <span className="text-[9px] font-normal leading-tight text-wine/55">
@@ -1469,7 +1496,7 @@ export default function DashboardSeating() {
                             : infant
                               ? "border-green-700/45 bg-green-50/90 text-green-950"
                               : "border-wine/25 bg-cream/80 text-wine-dark"
-                      }`}
+                      }${parejaListRingClass(g, role)}`}
                     >
                       {shown}
                       {g.dietary?.trim() ? (
@@ -1537,7 +1564,7 @@ export default function DashboardSeating() {
                                 : infant
                                   ? "border-green-700/45 bg-green-50/90 text-green-950"
                                   : "border-wine/25 bg-cream/80 text-wine-dark"
-                          }`}
+                          }${parejaListRingClass(g, role)}`}
                         >
                           {chipShown}
                         </div>
@@ -2095,8 +2122,16 @@ export default function DashboardSeating() {
                               r={29}
                               fill={seatBlobFill(occupant.inv, occupant.role)}
                               fillOpacity={0.92}
-                              stroke="#fff"
-                              strokeWidth={2.5}
+                              stroke={
+                                isParejaSeat(occupant.inv, occupant.role)
+                                  ? "#fbbf24"
+                                  : "#fff"
+                              }
+                              strokeWidth={
+                                isParejaSeat(occupant.inv, occupant.role)
+                                  ? 3.4
+                                  : 2.5
+                              }
                               style={{ pointerEvents: "none" }}
                             />
                             <text
@@ -2667,7 +2702,7 @@ export default function DashboardSeating() {
                                   seat: row.seat,
                                 })
                               }
-                              className="flex cursor-grab items-center justify-between gap-1 rounded-md border border-sand bg-white px-2 py-1.5 active:cursor-grabbing"
+                              className={`flex cursor-grab items-center justify-between gap-1 rounded-md border border-sand bg-white px-2 py-1.5 active:cursor-grabbing${parejaListRingClass(row.g, row.role)}`}
                             >
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-xs font-medium text-wine-dark">

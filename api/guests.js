@@ -99,6 +99,8 @@ function sanitizeInvitationRow(row) {
     email: normStr(row.email, 120),
     phone: normStr(row.phone, 40),
     plusOneName: normStr(row.plusOneName, 200),
+    isCouple: normBool(row.isCouple),
+    plusOneIsCouple: normBool(row.plusOneIsCouple),
   }
   return /** @type {typeof row & Record<string, unknown>} */ (out)
 }
